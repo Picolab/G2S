@@ -12,7 +12,10 @@
   "pico-engine": {
     "port": 8080,
     "modules": {
-      "indy_sdk": "./indy-sdk.js"
+      "wallet": "./indy-sdk/wallet.js",
+      "pool": "./indy-sdk/pool.js",
+      "ledger": "./indy-sdk/ledger.js",
+      "payment": "./indy-sdk/payment.js"
     }
   },
   "author": "Tedrub",
