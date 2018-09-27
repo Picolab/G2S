@@ -7,15 +7,9 @@ module.exports = {
         args:['config','credentials'],
         fn  :async function(args,callback){
             try {
-                await sdk.createWallet(
-                    args.config,
-                    args.credentials
-                );
+                await sdk.createWallet( args.config, args.credentials );
             } catch (e) {
-                if (e.message !== 'WalletAlreadyExistsError') {
-                    console.warn('create wallet failed with message: ' + e.message);
-                    throw e;
-                }
+                callback(e,result);
             }
             wallets[args.config.id] = await sdk.openWallet(
                     args.config,
@@ -34,10 +28,7 @@ module.exports = {
                     args.credentials
                 );
             } catch (e) {
-                if (e.message !== '...') {// TODO: get error....
-                    console.warn('open wallet failed with message: ' + e.message);
-                    throw e;
-                }
+                callback(e,result);
         } 
         callback(null,wallets[args.config.id]);
         }
@@ -55,19 +46,16 @@ module.exports = {
         fn  :async function(args,callback){
             let result;
             try {
-                result = await sdk.closeWallet(args.walletHandle);
+                result = await sdk.closeWallet(parseInt(args.walletHandle, 10));
             } catch (e) {
-                if (e.message !== '...') {// TODO: get error....
-                    console.warn('close wallet failed with message: ' + e.message);
-                    throw e;
-                }
+                callback(e,result);
             } 
             callback(null,result);
         }
     },
     createWallet:{
         type:'action',
-        args:['walletName','password'],
+        args:['config','credentials'],
         fn  :async function(args,callback){
             let result;
             try {
@@ -76,10 +64,7 @@ module.exports = {
                     args.credentials
                 );
             } catch (e) {
-                if (e.message !== 'WalletAlreadyExistsError') {
-                    console.warn('create wallet failed with message: ' + e.message);
-                    throw e;
-                }
+                callback(e,result);
             } 
             callback(null,result);
         }
@@ -95,10 +80,7 @@ module.exports = {
                     args.credentials
                 );
             } catch (e) {
-                if (e.message !== '...') {// TODO: get error....
-                    console.warn('close wallet failed with message: ' + e.message);
-                    throw e;
-                }
+                callback(e,result);
             } 
             callback(null,result);
         }},
@@ -108,14 +90,11 @@ module.exports = {
         fn: async function(args,callback){
             try {
                 result = await sdk.exportWallet(
-                    args.walletHandle,
+                    parseInt(args.walletHandle, 10),
                     args.exportConfig
                 );
             }catch (e) {
-                if (e.message !== '...') {// TODO: get error....
-                    console.warn('export wallet failed with message: ' + e.message);
-                    throw e;
-                }
+                callback(e,result);
             } 
             callback(null,result);
         }
@@ -132,10 +111,7 @@ module.exports = {
                     args.importConfig
                 );
             } catch (e) {
-                if (e.message !== '....') { //TODO: get error code
-                    console.warn('import wallet failed with message: ' + e.message);
-                    throw e;
-                }
+                callback(e,result);
             } 
             callback(null,result);
         }
@@ -152,10 +128,7 @@ module.exports = {
                     args.didConfig
                 );
             } catch (e) {
-                if (e.message !== '...') { //TODO : get code
-                    console.warn('create did failed with message: ' + e.message);
-                    throw e;
-                }
+                callback(e,result);
             }
             callback(null,results);
         }
@@ -167,15 +140,12 @@ module.exports = {
             let result;
             try {
                 result = await sdk.replaceKeysStart (
-                    args.walletHandle,
+                    parseInt(args.walletHandle, 10),
                     args.did,
                     args.identityConfig,
                 );
             } catch (e) {
-                if (e.message !== '...') { // TODO: get error code
-                    console.warn('replaceKeyStart failed with message: ' + e.message);
-                    throw e;
-                }
+                callback(e,result);
             }
             callback(null,result);
         }
@@ -187,14 +157,11 @@ module.exports = {
             let result;
             try {
                 result = await sdk.createWreplaceKeysApply(
-                    args.walletHandle,
+                    parseInt(args.walletHandle, 10),
                     args.did
                 );
             } catch (e) {
-                if (e.message !== '...') { // TODO: get error code
-                    console.warn('replaceKeysApply failed with message: ' + e.message);
-                    throw e;
-                }
+                callback(e,result);
             }
             callback(null,result);
         }
@@ -206,14 +173,11 @@ module.exports = {
             let result;
             try {
                 result = await sdk.storeTheirDid (
-                    args.walletHandle,
+                    parseInt(args.walletHandle, 10),
                     args.identityConfig
                 );
             } catch (e) {
-                if (e.message !== '...') { // get error code
-                    console.warn('storeTheirDid failed with message: ' + e.message);
-                    throw e;
-                }
+                callback(e,result);
             }
             callback(null,result);
         }
@@ -225,15 +189,12 @@ module.exports = {
             let result;
             try {
                 result = await sdk.keyForDid (
-                    args.poolHandle,
-                    args.walletHandle,
+                    parseInt(args.poolHandle, 10),
+                    parseInt(args.walletHandle, 10),
                     args.did
                 );
             }catch (e) {
-                if (e.message !== '...') {// TODO: get error....
-                    console.warn('keyForDid failed with message: ' + e.message);
-                    throw e;
-                }
+                callback(e,result);
             } 
             callback(null,result);
         }
@@ -245,14 +206,11 @@ module.exports = {
             let result;
             try {
                 result = await sdk.keyForLocalDid(
-                    args.walletHandle,
+                    parseInt(args.walletHandle, 10),
                     args.exportConfig
                 );
             }catch (e) {
-                if (e.message !== '...') {// TODO: get error....
-                    console.warn('keyForLocalDid failed with message: ' + e.message);
-                    throw e;
-                }
+                callback(e,result);
             } 
             callback(null,result);
         }
@@ -264,16 +222,13 @@ module.exports = {
             let result;
             try {
                 result = await sdk.setEndpointForDid(
-                    args.walletHandle,
+                    parseInt(args.walletHandle, 10),
                     args.adress,
                     args.transportKey,
                     args.did
                 );
             } catch (e) {
-                if (e.message !== 'WalletAlreadyExistsError') {
-                    console.warn('setEndpointForDid failed with message: ' + e.message);
-                    throw e;
-                }
+                callback(e,result);
             }
             callback(null,result);
         }
@@ -285,14 +240,11 @@ module.exports = {
             let result;
             try {
                 result = await sdk.getEndpointForDid(
-                    args.walletHandle,
-                    args.poolHandle
+                    parseInt(args.walletHandle, 10),
+                    parseInt(args.poolHandle, 10)
                 );
             }catch (e) {
-                if (e.message !== '...') {// TODO: get error....
-                    console.warn('getEndpointForDid failed with message: ' + e.message);
-                    throw e;
-                }
+                callback(e,result);
             } 
             callback(null,result);
         }
@@ -304,15 +256,12 @@ module.exports = {
             let result;
             try {
                 result = await sdk.setDidMetadata(
-                    args.walletHandle,
+                    parseInt(args.walletHandle, 10),
                     args.did,
                     args.metaData
                 );
             } catch (e) {
-                if (e.message !== 'WalletAlreadyExistsError') {
-                    console.warn('setDidMetadata failed with message: ' + e.message);
-                    throw e;
-                }
+                callback(e,result);
             }
             callback(null,result);
         }
@@ -324,14 +273,11 @@ module.exports = {
             let result;
             try {
                 result = await sdk.getDidMetadata(
-                    args.walletHandle,
+                    parseInt(args.walletHandle, 10),
                     args.did
                 );
             }catch (e) {
-                if (e.message !== '...') {// TODO: get error....
-                    console.warn('getDidMetadata failed with message: ' + e.message);
-                    throw e;
-                }
+                callback(e,result);
             } 
             callback(null,result);
         }
@@ -347,10 +293,7 @@ module.exports = {
                     args.did
                 );
             }catch (e) {
-                if (e.message !== '...') {// TODO: get error....
-                    console.warn('getMyDidWithMeta failed with message: ' + e.message);
-                    throw e;
-                }
+                callback(e,result);
             } 
             callback(null,result);
         }
@@ -362,13 +305,10 @@ module.exports = {
             let result;
             try {
                 result = await sdk.listMyDidsWithMeta(
-                    args.walletHandle
+                    parseInt(args.walletHandle, 10)
                 );
             }catch (e) {
-                if (e.message !== '...') {// TODO: get error....
-                    console.warn('listMyDidsWithMeta failed with message: ' + e.message);
-                    throw e;
-                }
+                callback(e,result);
             } 
             callback(null,result);
         }
@@ -384,10 +324,7 @@ module.exports = {
                     args.fullVerkey
                 );
             }catch (e) {
-                if (e.message !== '...') {// TODO: get error....
-                    console.warn('abbreviateVerkey failed with message: ' + e.message);
-                    throw e;
-                }
+                callback(e,result);
             } 
             callback(null,result);
         }

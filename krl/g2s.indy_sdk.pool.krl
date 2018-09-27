@@ -1,11 +1,11 @@
 ruleset G2S.indy_sdk.pool {
   meta {
-    shares __testing, listPools, poolHandle
+    shares __testing, listPools, pool
   }
   global {
     Pool={}
     __testing = { "queries":
-      [ { "name": "listPools" },{"name":"poolHandle"}
+      [ { "name": "listPools" },{"name":"pool"}
       //, { "name": "entry", "args": [ "key" ] }
       ] , "events":
       [ { "domain": "pool", "type": "open" , "attrs": ["poolName"]}
@@ -13,16 +13,16 @@ ruleset G2S.indy_sdk.pool {
       ]
     }
     listPools= function(){
-      indy_sdk:listPool();
+      pool:listPool();
     }
-    poolHandle= function(){
-      indy_sdk:poolHandle();
+    pool= function(){
+      pool:poolHandle();
       //Pool{"handle"}//.defaultsTo("")
     }
   }   
   rule openPool {
     select when pool open
-      indy_sdk:openPool(event:attr("poolName")) setting(poolHandle)
+      pool:openPool(event:attr("poolName")) setting(poolHandle)
     always{
       Pool.put(["handle"],poolHandle)
     }

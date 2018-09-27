@@ -24,9 +24,7 @@ module.exports = {
                     try {
                         pool = await sdk.openPoolLedger(args.poolName);
                     } catch (e) {
-                        if (e.message !== "...") {//TODO: get error code for ..
-                            throw e;
-                        }
+                        callback(e,pool);
                     }
                     callback(null, pool);
                 }
@@ -40,8 +38,14 @@ module.exports = {
     listPool: { type: 'function',
                 args: [],
                 fn: async function(args, callback){
-                        callback(null, await sdk.listPools());
-                    },
+                    let result;
+                    try{
+                        result = await sdk.listPools();
+                    } catch (e){
+                        callback(e,result);
+                    } 
+                    callback(null,result);
+                },
               },
     closePool:{ type: 'action',
                 args: ['handle'],
@@ -50,9 +54,7 @@ module.exports = {
                     try{
                         result = await sdk.closePoolLedger(args.handle);
                     } catch (e){
-                        if (e.message !== "...") { //TODO: get error code for ..
-                            throw e;
-                        } 
+                        callback(e,result);
                     } 
                     callback(null,result);
                     }  
