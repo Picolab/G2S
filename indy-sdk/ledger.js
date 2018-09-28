@@ -119,7 +119,7 @@ module.exports = {
             callback(null,nymRequest);
             }    
     },
-    /*buildAttribRequest:{
+    buildAttribRequest:{
         type:'function',
         args:['submitterDid', 'targetDid', 'hash', 'raw', 'enc'],
         fn  :async function(args,callback){
@@ -134,19 +134,19 @@ module.exports = {
             }    
     },
     buildGetAttribRequest:{
-        type:'action',
-        args:['poolHandle','signing_did','walletHandle','nymRequest'],
+        type:'function',
+        args:['submitterDid', 'targetDid', 'hash', 'raw', 'enc' ],
         fn  :async function(args,callback){
             let result;
             try {
-                result = await sdk.buildGetAttribRequest( parseInt(args.poolHandle, 10),  parseInt(args.walletHandle, 10), args.signing_did, nymRequest);
+                result = await sdk.buildGetAttribRequest( args.submitterDid, args.targetDid, args.hash, args.raw, args.enc);
                 } 
             catch (e) {
                 callback(e,result);
             }
                 callback(null,result);
             }    
-    },*/
+    },
     buildGetNymRequest:{
         type:'function',
         args:['submitterDid','targetDid'],
@@ -160,14 +160,14 @@ module.exports = {
             }
                 callback(null,result);
             }    
-    },/*
+    },
     buildSchemaRequest:{
         type:'action',
-        args:['poolHandle','signing_did','walletHandle','nymRequest'],
+        args:[ 'submitterDid', 'data'],
         fn  :async function(args,callback){
             let result;
             try {
-                result = await sdk.buildSchemaRequest( parseInt(args.poolHandle, 10),  parseInt(args.walletHandle, 10), args.signing_did, nymRequest);
+                result = await sdk.buildSchemaRequest( args.submitterDid, args.data );
                 } 
             catch (e) {
                 callback(e,result);
@@ -176,12 +176,12 @@ module.exports = {
             }    
     },
     buildGetSchemaRequest:{
-        type:'action',
-        args:['poolHandle','signing_did','walletHandle','nymRequest'],
+        type:'function',
+        args:['submitterDid', 'id' ],
         fn  :async function(args,callback){
             let result;
             try {
-                result = await sdk.buildGetSchemaRequest( parseInt(args.poolHandle, 10),  parseInt(args.walletHandle, 10), args.signing_did, nymRequest);
+                result = await sdk.buildGetSchemaRequest(args.submitterDid, args.id);
                 } 
             catch (e) {
                 callback(e,result);
@@ -190,12 +190,12 @@ module.exports = {
             }    
     },
     parseGetSchemaResponse:{
-        type:'action',
-        args:['poolHandle','signing_did','walletHandle','nymRequest'],
+        type:'function',
+        args:['getSchemaResponse'],
         fn  :async function(args,callback){
             let result;
             try {
-                result = await sdk.parseGetSchemaResponse( parseInt(args.poolHandle, 10),  parseInt(args.walletHandle, 10), args.signing_did, nymRequest);
+                result = await sdk.parseGetSchemaResponse( args.getSchemaResponse );
                 } 
             catch (e) {
                 callback(e,result);
@@ -205,11 +205,11 @@ module.exports = {
     },
     buildCredDefRequest:{
         type:'action',
-        args:['poolHandle','signing_did','walletHandle','nymRequest'],
+        args:['submitterDid','data'],
         fn  :async function(args,callback){
             let result;
             try {
-                result = await sdk.buildCredDefRequest( parseInt(args.poolHandle, 10),  parseInt(args.walletHandle, 10), args.signing_did, nymRequest);
+                result = await sdk.buildCredDefRequest( args.submitterDid, args.data );
                 } 
             catch (e) {
                 callback(e,result);
@@ -218,12 +218,12 @@ module.exports = {
             }    
     },
     buildGetCredDefRequest:{
-        type:'action',
-        args:['poolHandle','signing_did','walletHandle','nymRequest'],
+        type:'function',
+        args:['submitterDid', 'id'  ],
         fn  :async function(args,callback){
             let result;
             try {
-                result = await sdk.buildGetCredDefRequest( parseInt(args.poolHandle, 10),  parseInt(args.walletHandle, 10), args.signing_did, nymRequest);
+                result = await sdk.buildGetCredDefRequest(args.submitterDid,args.id);
                 } 
             catch (e) {
                 callback(e,result);
@@ -232,12 +232,12 @@ module.exports = {
             }    
     },
     parseGetCredDefResponse:{
-        type:'action',
-        args:['poolHandle','signing_did','walletHandle','nymRequest'],
+        type:'function',
+        args:['getCredDefResponse'],
         fn  :async function(args,callback){
             let result;
             try {
-                result = await sdk.parseGetCredDefResponse( parseInt(args.poolHandle, 10),  parseInt(args.walletHandle, 10), args.signing_did, nymRequest);
+                result = await sdk.parseGetCredDefResponse( args.getCredDefResponse );
                 } 
             catch (e) {
                 callback(e,result);
@@ -247,11 +247,11 @@ module.exports = {
     },
     buildNodeRequest:{
         type:'action',
-        args:['poolHandle','signing_did','walletHandle','nymRequest'],
+        args:[ 'submitterDid', 'targetDid', 'data' ],
         fn  :async function(args,callback){
             let result;
             try {
-                result = await sdk.buildNodeRequest( parseInt(args.poolHandle, 10),  parseInt(args.walletHandle, 10), args.signing_did, nymRequest);
+                result = await sdk.buildNodeRequest( args.submitterDid, args.targetDid, args.data  );
                 } 
             catch (e) {
                 callback(e,result);
@@ -260,12 +260,12 @@ module.exports = {
             }    
     },
     buildGetValidatorInfoRequest:{
-        type:'action',
-        args:['poolHandle','signing_did','walletHandle','nymRequest'],
+        type:'function',
+        args:[ 'submitterDid' ],
         fn  :async function(args,callback){
             let result;
             try {
-                result = await sdk.buildGetValidatorInfoRequest( parseInt(args.poolHandle, 10),  parseInt(args.walletHandle, 10), args.signing_did, nymRequest);
+                result = await sdk.buildGetValidatorInfoRequest( args.submitterDid  );
                 } 
             catch (e) {
                 callback(e,result);
@@ -274,12 +274,12 @@ module.exports = {
             }    
     },
     buildGetTxnRequest:{
-        type:'action',
-        args:['poolHandle','signing_did','walletHandle','nymRequest'],
+        type:'function',
+        args:[ 'submitterDid', 'ledgerType', 'data' ],
         fn  :async function(args,callback){
             let result;
             try {
-                result = await sdk.buildGetTxnRequest( parseInt(args.poolHandle, 10),  parseInt(args.walletHandle, 10), args.signing_did, nymRequest);
+                result = await sdk.buildGetTxnRequest(  args.submitterDid, args.ledgerType, args.data );
                 } 
             catch (e) {
                 callback(e,result);
@@ -289,11 +289,11 @@ module.exports = {
     },
     buildPoolConfigRequest:{
         type:'action',
-        args:['poolHandle','signing_did','walletHandle','nymRequest'],
+        args:[ 'submitterDid', 'writes', 'force'],
         fn  :async function(args,callback){
             let result;
             try {
-                result = await sdk.buildPoolConfigRequest( parseInt(args.poolHandle, 10),  parseInt(args.walletHandle, 10), args.signing_did, nymRequest);
+                result = await sdk.buildPoolConfigRequest( args.submitterDid, args.writes, args.force );
                 } 
             catch (e) {
                 callback(e,result);
@@ -303,11 +303,11 @@ module.exports = {
     },
     buildPoolRestartRequest:{
         type:'action',
-        args:['poolHandle','signing_did','walletHandle','nymRequest'],
+        args:[ 'submitterDid', 'action', 'datetime'],
         fn  :async function(args,callback){
             let result;
             try {
-                result = await sdk.buildPoolRestartRequest( parseInt(args.poolHandle, 10),  parseInt(args.walletHandle, 10), args.signing_did, nymRequest);
+                result = await sdk.buildPoolRestartRequest( args.submitterDid, args.action, args.datetime );
                 } 
             catch (e) {
                 callback(e,result);
@@ -317,11 +317,12 @@ module.exports = {
     },
     buildPoolUpgradeRequest:{
         type:'action',
-        args:['poolHandle','signing_did','walletHandle','nymRequest'],
+        args:['submitterDid', 'name', 'version', 'action', 'sha256', 
+              'timeout', 'schedule', 'justification', 'reinstall', 'force', 'package' ],
         fn  :async function(args,callback){
             let result;
             try {
-                result = await sdk.buildPoolUpgradeRequest( parseInt(args.poolHandle, 10),  parseInt(args.walletHandle, 10), args.signing_did, nymRequest);
+                result = await sdk.buildPoolUpgradeRequest( args.submitterDid, args.name, args.version, args.action, args.sha256, args.timeout, args.schedule, args.justification, args.reinstall, args.force, args.package );
                 } 
             catch (e) {
                 callback(e,result);
@@ -331,11 +332,11 @@ module.exports = {
     },
     buildRevocRegDefRequest:{
         type:'action',
-        args:['poolHandle','signing_did','walletHandle','nymRequest'],
+        args:['submitterDid', 'data'],
         fn  :async function(args,callback){
             let result;
             try {
-                result = await sdk.buildRevocRegDefRequest( parseInt(args.poolHandle, 10),  parseInt(args.walletHandle, 10), args.signing_did, nymRequest);
+                result = await sdk.buildRevocRegDefRequest(args.submitterDid, args.data);
                 } 
             catch (e) {
                 callback(e,result);
@@ -344,12 +345,12 @@ module.exports = {
             }    
     },
     buildGetRevocRegDefRequest:{
-        type:'action',
-        args:['poolHandle','signing_did','walletHandle','nymRequest'],
+        type:'function',
+        args:[ 'submitterDid', 'id'],
         fn  :async function(args,callback){
             let result;
             try {
-                result = await sdk.buildGetRevocRegDefRequest( parseInt(args.poolHandle, 10),  parseInt(args.walletHandle, 10), args.signing_did, nymRequest);
+                result = await sdk.buildGetRevocRegDefRequest( args.submitterDid, args.id );
                 } 
             catch (e) {
                 callback(e,result);
@@ -358,12 +359,12 @@ module.exports = {
             }    
     },
     parseGetRevocRegDefResponse:{
-        type:'action',
-        args:['poolHandle','signing_did','walletHandle','nymRequest'],
+        type:'function',
+        args:['getRevocRefDefResponse' ],
         fn  :async function(args,callback){
             let result;
             try {
-                result = await sdk.parseGetRevocRegDefResponse( parseInt(args.poolHandle, 10),  parseInt(args.walletHandle, 10), args.signing_did, nymRequest);
+                result = await sdk.parseGetRevocRegDefResponse( args.getRevocRefDefResponse );
                 } 
             catch (e) {
                 callback(e,result);
@@ -373,11 +374,11 @@ module.exports = {
     },
     buildRevocRegEntryRequest:{
         type:'action',
-        args:['poolHandle','signing_did','walletHandle','nymRequest'],
+        args:[  'submitterDid', 'revocRegDefId', 'revDefType', 'value' ],
         fn  :async function(args,callback){
             let result;
             try {
-                result = await sdk.buildRevocRegEntryRequest( parseInt(args.poolHandle, 10),  parseInt(args.walletHandle, 10), args.signing_did, nymRequest);
+                result = await sdk.buildRevocRegEntryRequest(  args.submitterDid, args.revocRegDefId, args.revDefType, args.value );
                 } 
             catch (e) {
                 callback(e,result);
@@ -386,12 +387,12 @@ module.exports = {
             }    
     },
     buildGetRevocRegRequest:{
-        type:'action',
-        args:['poolHandle','signing_did','walletHandle','nymRequest'],
+        type:'function',
+        args:[ 'submitterDid', 'revocRegDefId', 'timestamp' ],
         fn  :async function(args,callback){
             let result;
             try {
-                result = await sdk.buildGetRevocRegRequest( parseInt(args.poolHandle, 10),  parseInt(args.walletHandle, 10), args.signing_did, nymRequest);
+                result = await sdk.buildGetRevocRegRequest(  args.submitterDid, args.revocRegDefId, args.timestamp );
                 } 
             catch (e) {
                 callback(e,result);
@@ -401,11 +402,11 @@ module.exports = {
     },
     buildGetRevocRegDeltaRequest:{
         type:'action',
-        args:['poolHandle','signing_did','walletHandle','nymRequest'],
+        args:[ 'submitterDid', 'revocRegDefId', 'from', 'to' ],
         fn  :async function(args,callback){
             let result;
             try {
-                result = await sdk.buildGetRevocRegDeltaRequest( parseInt(args.poolHandle, 10),  parseInt(args.walletHandle, 10), args.signing_did, nymRequest);
+                result = await sdk.buildGetRevocRegDeltaRequest(  args.submitterDid, args.revocRegDefId, args.from, args.to );
                 } 
             catch (e) {
                 callback(e,result);
@@ -415,11 +416,11 @@ module.exports = {
     },
     parseGetRevocRegDeltaResponse:{
         type:'action',
-        args:['poolHandle','signing_did','walletHandle','nymRequest'],
+        args:['getRevocRegDeltaResponse'],
         fn  :async function(args,callback){
             let result;
             try {
-                result = await sdk.parseGetRevocRegDeltaResponse( parseInt(args.poolHandle, 10),  parseInt(args.walletHandle, 10), args.signing_did, nymRequest);
+                result = await sdk.parseGetRevocRegDeltaResponse( args.getRevocRegDeltaResponse );
                 } 
             catch (e) {
                 callback(e,result);
@@ -427,5 +428,4 @@ module.exports = {
                 callback(null,result);
             }    
     },
-    */
     }

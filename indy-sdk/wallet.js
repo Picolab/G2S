@@ -329,4 +329,17 @@ module.exports = {
             callback(null,result);
         }
     }
+    ///////////////////////////////Non-secret//////////////////////////////////////
+    /*
+    addWalletRecord ( wh, type, id, value, tags )
+    updateWalletRecordValue ( wh, type, id, value ) 
+    updateWalletRecordTags ( wh, type, id, tags ) 
+    addWalletRecordTags ( wh, type, id, tags ) 
+    deleteWalletRecordTags ( wh, type, id, tagNames )
+    deleteWalletRecord ( wh, type, id ) 
+    getWalletRecord ( wh, type, id, options ) 
+    openWalletSearch ( wh, type, query, options )
+    fetchWalletSearchNextRecords ( wh, walletSearchHandle, count ) 
+    closeWalletSearch ( walletSearchHandle )
+    */
     }
