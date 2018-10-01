@@ -4,7 +4,7 @@ let pool;
 module.exports = {
     createAndOpenPool: { type:'action',
                 args:['poolName','poolConfig'],
-                fn  :async function(args,callback){
+                fn  :async function(args){
                     try {
                         await sdk.deletePoolLedgerConfig(args.poolName);
                     } catch (e) {
@@ -13,50 +13,32 @@ module.exports = {
                         }
                     } finally {
                         await sdk.createPoolLedgerConfig(args.poolName, args.poolConfig);
-                        pool = await sdk.openPoolLedger(args.poolName);
+                        return await sdk.openPoolLedger(args.poolName);
                     }
-                    callback(null,pool);
                 },
             },
     openPool: { type:'action',
                 args:['poolName'],
-                fn  :async function(args,callback){
-                    try {
-                        pool = await sdk.openPoolLedger(args.poolName);
-                    } catch (e) {
-                        callback(e,pool);
-                    }
-                    callback(null, pool);
+                fn  :async function(args){
+                    return await sdk.openPoolLedger(args.poolName);
                 }
     },
     poolHandle:{type:'function',
                 args:[],
-                fn: async function(args,callback){
-                    callback(null,pool);
+                fn: async function(args){
+                    return pool;
                 }
             },
     listPool: { type: 'function',
                 args: [],
-                fn: async function(args, callback){
-                    let result;
-                    try{
-                        result = await sdk.listPools();
-                    } catch (e){
-                        callback(e,result);
-                    } 
-                    callback(null,result);
+                fn: async function(args){
+                    return await sdk.listPools();
                 },
               },
     closePool:{ type: 'action',
                 args: ['handle'],
-                fn  : async function(args,callback){
-                    let result;
-                    try{
-                        result = await sdk.closePoolLedger(args.handle);
-                    } catch (e){
-                        callback(e,result);
-                    } 
-                    callback(null,result);
+                fn  : async function(args){
+                        return await sdk.closePoolLedger(args.handle);
                     }  
                 },
     }

@@ -7,7 +7,7 @@
     "start": "pico-engine"
   },
   "dependencies": {
-    "pico-engine": "^0.46.1"
+    "pico-engine": "^0.47.0"
   },
   "pico-engine": {
     "port": 8080,
@@ -15,7 +15,11 @@
       "wallet": "./indy-sdk/wallet.js",
       "pool": "./indy-sdk/pool.js",
       "ledger": "./indy-sdk/ledger.js",
-      "payment": "./indy-sdk/payment.js"
+      "payment": "./indy-sdk/payment.js",
+      "pairwise": "./indy-sdk/pairwise.js",
+      "anoncred": "./indy-sdk/anoncreds.js",
+      "blob_storage": "./indy-sdk/blob_storage.js",
+      "crypto": "./indy-sdk/crypto.js"
     }
   },
   "author": "Tedrub",
