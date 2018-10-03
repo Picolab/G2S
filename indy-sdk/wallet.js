@@ -11,7 +11,15 @@ module.exports = {
             return wallets[args.config.id];
         }
     },
-    openWallet:{
+    openWalletFunction:{
+        type:'function',
+        args:['config','credentials'],
+        fn  :async function(args){            
+            wallets[args.config.id] = await sdk.openWallet(args.config,args.credentials);
+            return wallets[args.config.id];
+        }
+    },
+    openWalletAction:{
         type:'action',
         args:['config','credentials'],
         fn  :async function(args){            
@@ -26,7 +34,14 @@ module.exports = {
             return wallets;
         }
     },
-    closeWallet:{
+    closeWalletFunction:{// TODO: remove handle from wallets...
+        type:'function',
+        args:['walletHandle'],
+        fn  :async function(args){
+            return await sdk.closeWallet(parseInt(args.walletHandle, 10));
+        }
+    },
+    closeWalletAction:{
         type:'action',
         args:['walletHandle'],
         fn  :async function(args){
