@@ -17,11 +17,24 @@ module.exports = {
                     }
                 },
             },
+    createPool: { type:'action',
+        args:['poolName','poolConfig'],
+        fn  :async function(args){
+            return await sdk.createPoolLedgerConfig(args.poolName, args.poolConfig);
+        }
+    },
     openPool: { type:'action',
-                args:['poolName'],
-                fn  :async function(args){
-                    return await sdk.openPoolLedger(args.poolName);
-                }
+        args:['poolName'],
+        fn  :async function(args){
+            pool = await sdk.openPoolLedger(args.poolName);
+            return pool;
+        }
+    },
+    deletePool: { type:'action',
+        args:['poolName'],
+        fn  :async function(args){
+            return await sdk.deletePoolLedgerConfig(args.poolName);
+        }
     },
     poolHandle:{type:'function',
                 args:[],

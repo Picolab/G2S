@@ -2,7 +2,7 @@ var sdk = require('indy-sdk')
 sdk.setProtocolVersion(2);
 module.exports = {
     issuerCreateSchema:{
-        type:'action',
+        type:'function',
         args:['issuerDid','name','version','attrNames'],
         fn  :async function(args){
             return await sdk.issuerCreateSchema(args.issuerDid, args.name, args.version, args.attrNames );

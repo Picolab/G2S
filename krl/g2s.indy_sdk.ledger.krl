@@ -1,10 +1,12 @@
 ruleset G2S.indy_sdk.ledger {
   meta {
-    shares __testing, getNym
+    shares __testing, getNym,anchorSchema,blocks
+    provides getNym,anchorSchema,blocks
   }
   global {
     __testing = { "queries":
-      [ { "name": "getNym","args":["poolHandle","submitterDid","targetDid"] }
+      [ { "name": "getNym","args":["poolHandle","submitterDid","targetDid"] },
+        { "name": "blocks","args":["pool_handle","submitter_did", "ledger_type"] }
       //, { "name": "entry", "args": [ "key" ] }
       ] , "events":
       [ //{ "domain": "d1", "type": "t1" }
@@ -16,6 +18,9 @@ ruleset G2S.indy_sdk.ledger {
                                                         "role",
                                                         "walletHandle"] }
       ]
+    }
+    blocks = function(pool_handle,submitter_did, ledger_type){
+      ledger:transactions(pool_handle,submitter_did, ledger_type)
     }
     getNym = function(poolHandle,submitterDid,targetDid){
       request = ledger:buildGetNymRequest(submitterDid,targetDid);
@@ -34,6 +39,40 @@ ruleset G2S.indy_sdk.ledger {
                                     request)                         
       send_directive("nym transaction");
       returns response
+    }
+    
+    anchorSchema = function(pool_handle,wallet_handle,submitter_did,issuerDid,name,version,attrNames){
+      schema_id_schema = anoncred:issuerCreateSchema(issuerDid,name,version,attrNames); // returns [schema_id,schema]
+      request = ledger:buildSchemaRequest(submitter_did,schema_id_schema[1]);
+      ledger:signAndSubmitRequest(pool_handle,wallet_handle,submitter_did,request)
+    }
+    
+    getSchema = function(pool_handle,submitter_did,data){
+      request = ledger:buildgetschemarequest(submitter_did,data);
+      reponse = ledger:submitRequest(pool_handle,request);
+      ledger:parsegetschemaresponse(reponse)
+    }
+    getCredentialDefinition = function(submitter_did,data){
+      request = ledger:buildCredDefRequest(submitter_did,data);
+      response = ledger:submitRequest(request.decode()); // request needs to be a json object??...
+      ledger:parseGetCredDefResponse(response)
+    }
+    anchorCredDef = defaction(pool_handle,wallet_handle, issuer_did,data,tag, signature_type, cred_def_config){
+      schema_id__schema = getSchema(pool_handle,issuer_did,data)
+      every{
+      anoncred:issuer_create_and_store_credential_def( wallet_handle, issuer_did, schema_id__schema[1], tag, signature_type, cred_def_config ) setting(credDefId_credDef)
+      anoncred:buildCredDefRequest(issuer_did,credDefId_credDef[1]) setting(request)
+      }
+      returns ledger:signAndSubmitRequest(pool_handle,wallet_handle,issuer_did,request)// does this return the cred_id 
+    }
+    issuerCreateCredentialOffer = function(wallet_handle,cred_def_id){
+      anoncred:issuerCreateCredentialOffer(wallet_handle,cred_def_id)
+    } 
+    proverCreateCredentialReq = function(){
+      anoncred:proverCreateCredentialReq(wallet_handle ,prover_did,cred_offer,cred_def,secret_id)
+    }
+    createLinkedSecret = function(wallet_handle, link_secret_id){
+      anoncred:proverCreateMasterSecret(wallet_handle, link_secret_id)
     }
     
   }

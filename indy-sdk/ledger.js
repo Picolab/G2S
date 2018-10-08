@@ -1,6 +1,26 @@
 var sdk = require('indy-sdk')
 sdk.setProtocolVersion(2);
+last_transaction = 0;
+transactions=[];
 module.exports = {
+    transactions:{
+        type:'function',
+        args:['poolHandle','submitterDid', 'ledgerType'],
+        fn  :async function(args){
+            let error = '', results=[] ;
+            while (true) {
+                try {
+                    request = sdk.buildGetTxnRequest ( submitterDid, ledgerType, last_transaction )
+                    results.append(sdk.submitRequest(poolHandle,request));
+                    last_transaction ++;
+                } catch (error) {
+                    console.log(error);
+                    last_transaction = 0;
+                    return results;  
+                } 
+            }
+        }    
+    },
     simpleNym:{
         type:'action',
         args:['poolHandle','signing_did','anchoring_did','anchoring_did_verkey','alias','role','walletHandle'],
@@ -108,7 +128,7 @@ module.exports = {
         }    
     },
     buildCredDefRequest:{
-        type:'action',
+        type:'function',
         args:['submitterDid','data'],
         fn  :async function(args){
             return await sdk.buildCredDefRequest( args.submitterDid, args.data );
