@@ -5,6 +5,7 @@ ruleset G2S.agent {
     //provides
     use module G2S.indy_sdk.wallet alias wallet_module
     use module G2S.indy_sdk.ledger alias ledger_module
+    use module G2S.indy_sdk.pool   alias pool_module
     use module io.picolabs.wrangler alias wrangler 
     
   }
@@ -14,7 +15,8 @@ ruleset G2S.agent {
       //, { "name": "entry", "args": [ "key" ] }
       ] , "events":
       [ { "domain": "agent", "type": "create_ephemeral_did" },
-        { "domain": "agent", "type": "create_did", "attrs":["did","seed","meta_data"] }
+        { "domain": "agent", "type": "create_did", "attrs":["did","seed","meta_data"] },
+        { "domain": "agent", "type": "create_credential_definition", "attrs":["issuer_did","name","version","attrNames","cred_data","tag", "signature_type", "cred_def_config"] }
       //, { "domain": "d2", "type": "t2", "attrs": [ "a1", "a2" ] }
       ]
     }
@@ -62,18 +64,30 @@ ruleset G2S.agent {
     //deleteDid = defaction(){
     //  noop()
     //}
-    anchorSchema = defaction(){
+    anchorSchema = function(issuerDid,name,version,attrNames){// todo
+        handle = openWalletFun();
+        results = ledger_module:anchorSchema(pool_module:handle(),handle,issuerDid,issuerDid,name,version,attrNames).klog("returned schema id");
+        closeWalletFun(handle);
+        results
+    }
+    defineCredential = defaction(issuer_did,schema_id){// todo
+      id_schema_schema = ledger_module:getSchema(pool_module:handle(),issuer_did,schema_id)
       every{
         openWallet() setting(handle)
-        ledger_module:anchorSchema(pool_handle,handle,submitter_did,issuerDid,name,version,attrNames)
+        ledger_module:anchorCredDef(pool_module:handle(),wallet_handle, issuer_did,id_schema_schema[1],tag, signature_type, cred_def_config)
         closeWallet(handle)
       }
     }
-    defineCredential = defaction(){
-      id_schema = ledger_module:getSchema(pool_handle,submitter_did,data)
-      every{
-       ledger_module:anchorCredDef(pool_handle,wallet_handle, issuer_did,data,tag, signature_type, cred_def_config)
-      }
+    createCredentialDefinition = defaction(issuer_did,name,version,attrNames,tag, signature_type, cred_def_config){
+        handle = openWalletFun()
+        results = ledger_module:anchorSchema(pool_module:handle(),handle,issuer_did,issuer_did,name,version,attrNames).klog("returned anchor schema in agent");
+        // need to get schema_id from the results above
+        id_schema_schema = ledger_module:getSchema(pool_module:handle(),issuer_did,schema_id);// can we skip this step and use schema from above?
+        every{
+          ledger_module:anchorCredDef(pool_module:handle(),handle, issuer_did,id_schema_schema[1],tag, signature_type, cred_def_config)setting(results);
+          closeWallet(handle);
+        }
+        returns results
     }
     credentialOffer = function(){
       
@@ -117,12 +131,24 @@ ruleset G2S.agent {
         ent:dids := ent:dids.append([did_verkey])
       }
   }
-  //rule deleteDid {
+  //rule deleteDid {// not supported in indy-sdk
   //  select when agent delete_did or wrangler channel_deleted
   //    deleteDid(event:attr("did").defaultsTo()) setting(did_verkey)
   //    always{
         //ent:dids := ent:dids.splice(index,index)
   //    }
   //}
-  
+  rule createCredentialDefinition {
+    select when agent create_credential_definition
+      createCredentialDefinition(event:attr("issuer_did"), // for schema
+                                 event:attr("name"),// for schema
+                                 event:attr("version"), // schema
+                                 event:attr("attrNames"), // schema
+                                 event:attr("tag"), 
+                                 event:attr("signature_type"), 
+                                 event:attr("cred_def_config"))setting(cred_def)
+      always{
+        ent:cred_defs := ent:cred_defs.append([cred_def.klog("cred_def results")])
+      }
+  }
 }

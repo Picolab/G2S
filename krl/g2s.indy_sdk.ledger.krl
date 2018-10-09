@@ -47,8 +47,8 @@ ruleset G2S.indy_sdk.ledger {
       ledger:signAndSubmitRequest(pool_handle,wallet_handle,submitter_did,request)
     }
     
-    getSchema = function(pool_handle,submitter_did,data){
-      request = ledger:buildgetschemarequest(submitter_did,data);
+    getSchema = function(pool_handle,submitter_did,schema_id){
+      request = ledger:buildgetschemarequest(submitter_did,schema_id);
       reponse = ledger:submitRequest(pool_handle,request);
       ledger:parsegetschemaresponse(reponse)
     }
@@ -57,10 +57,9 @@ ruleset G2S.indy_sdk.ledger {
       response = ledger:submitRequest(request.decode()); // request needs to be a json object??...
       ledger:parseGetCredDefResponse(response)
     }
-    anchorCredDef = defaction(pool_handle,wallet_handle, issuer_did,data,tag, signature_type, cred_def_config){
-      schema_id__schema = getSchema(pool_handle,issuer_did,data)
+    anchorCredDef = defaction(pool_handle,wallet_handle, issuer_did,schema,tag, signature_type, cred_def_config){
       every{
-      anoncred:issuer_create_and_store_credential_def( wallet_handle, issuer_did, schema_id__schema[1], tag, signature_type, cred_def_config ) setting(credDefId_credDef)
+      anoncred:issuer_create_and_store_credential_def( wallet_handle, issuer_did, schema, tag, signature_type, cred_def_config ) setting(credDefId_credDef)
       anoncred:buildCredDefRequest(issuer_did,credDefId_credDef[1]) setting(request)
       }
       returns ledger:signAndSubmitRequest(pool_handle,wallet_handle,issuer_did,request)// does this return the cred_id 
