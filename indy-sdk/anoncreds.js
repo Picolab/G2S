@@ -12,6 +12,7 @@ module.exports = {
         type:'action',
         args:['wh', 'issuerDid', 'schema', 'tag', 'signatureType', 'config'],
         fn  :async function(args){
+            console.log("args",args);
             return await sdk.issuerCreateAndStoreCredentialDef(args.wh, args.issuerDid, args.schema, args.tag, args.signatureType, args.config );
         }
     

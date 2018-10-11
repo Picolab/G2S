@@ -1,7 +1,7 @@
 ruleset G2S.agent {
   meta {
-    shares __testing, ephemeralDids, dids
-    provides ephemeralDids, dids
+    shares __testing, ephemeralDids, dids,credentialDefinition,credentialDefinitions
+    provides ephemeralDids, dids,credentialDefinition,credentialDefinitions
     //provides
     use module G2S.indy_sdk.wallet alias wallet_module
     use module G2S.indy_sdk.ledger alias ledger_module
@@ -11,12 +11,17 @@ ruleset G2S.agent {
   }
   global {
     __testing = { "queries":
-      [ { "name": "__testing" }, {"name":"ephemeralDids"},{"name":"dids"}
+      [ { "name": "__testing" }, /*{"name":"ephemeralDids"},*/{"name":"dids"},{"name":"credentialDefinition","args":["submitterDid", "id"]},{"name":"credentialDefinitions"}
       //, { "name": "entry", "args": [ "key" ] }
       ] , "events":
-      [ { "domain": "agent", "type": "create_ephemeral_did" },
+      [ //{ "domain": "agent", "type": "create_ephemeral_did" },
         { "domain": "agent", "type": "create_did", "attrs":["did","seed","meta_data"] },
-        { "domain": "agent", "type": "create_credential_definition", "attrs":["issuer_did","name","version","attrNames","cred_data","tag", "signature_type", "cred_def_config"] }
+        { "domain": "agent", "type": "create_credential_definition", "attrs":["issuer_did","name","version","attrNames","tag"] },
+        { "domain": "ledger", "type": "nym", "attrs": [ "signing_did",
+                                                        "anchoring_did",
+                                                        "anchoring_did_verkey",
+                                                        "alias",
+                                                        "role"] }
       //, { "domain": "d2", "type": "t2", "attrs": [ "a1", "a2" ] }
       ]
     }
@@ -53,6 +58,16 @@ ruleset G2S.agent {
       }
       returns did_verkey
     }
+    
+    newNym = defaction(signing_did,anchoring_did,anchoring_did_verkey,alias,role){
+      every{
+      openWallet() setting(handle)
+      ledger_module:nym(pool_module:handle(),signing_did,anchoring_did,anchoring_did_verkey,alias,role,handle) setting(results)
+      closeWallet(handle)
+      }
+      returns results
+    }
+    
     createEphemeralDid = defaction(){
       every{
         openWallet() setting(handle)
@@ -64,7 +79,7 @@ ruleset G2S.agent {
     //deleteDid = defaction(){
     //  noop()
     //}
-    anchorSchema = function(issuerDid,name,version,attrNames){// todo
+    /*anchorSchema = function(issuerDid,name,version,attrNames){// todo
         handle = openWalletFun();
         results = ledger_module:anchorSchema(pool_module:handle(),handle,issuerDid,issuerDid,name,version,attrNames).klog("returned schema id");
         closeWalletFun(handle);
@@ -77,23 +92,41 @@ ruleset G2S.agent {
         ledger_module:anchorCredDef(pool_module:handle(),wallet_handle, issuer_did,id_schema_schema[1],tag, signature_type, cred_def_config)
         closeWallet(handle)
       }
+    }*/
+    credentialDefinition = function(submitterDid, id){
+      ledger_module:credDefs(pool_module:handle(),submitterDid, id)
+    }
+    credentialDefinitions = function(){
+      ent:cred_defs
     }
     createCredentialDefinition = defaction(issuer_did,name,version,attrNames,tag, signature_type, cred_def_config){
         handle = openWalletFun()
-        results = ledger_module:anchorSchema(pool_module:handle(),handle,issuer_did,issuer_did,name,version,attrNames).klog("returned anchor schema in agent");
+        results = ledger_module:anchorSchema(pool_module:handle(),handle.klog("walletHandle1"),issuer_did,issuer_did,name,version,["first","second"]/*attrNames.decode()*/).klog("returned anchor schema in agent");
         // need to get schema_id from the results above
-        id_schema_schema = ledger_module:getSchema(pool_module:handle(),issuer_did,schema_id);// can we skip this step and use schema from above?
+        id_schema_schema = ledger_module:getSchema(pool_module:handle(),issuer_did,results{"result"}{"txnMetadata"}{"txnId"}.klog("schemaid")).klog("getschema ");// can we skip this step and use schema from above?
         every{
-          ledger_module:anchorCredDef(pool_module:handle(),handle, issuer_did,id_schema_schema[1],tag, signature_type, cred_def_config)setting(results);
+          ledger_module:anchorCredDef(pool_module:handle(),handle, issuer_did,id_schema_schema[1].klog("schema"),tag, signature_type, cred_def_config)setting(results);
           closeWallet(handle);
         }
         returns results
     }
     credentialOffer = function(){
-      
+      handle = openWalletFun();
+      offer = ledger_module:issuerCreateCredentialOffer(handle,cred_def_id);
+      closeWalletFun(handle);
+      offer
     }
-    credentialRequest = function(){
-      
+    createLinkSecret = function(link_secret_id){
+      handle = openWalletFun();
+      results = createLinkedSecret(handle, link_secret_id);
+      closeWalletFun(handle);
+      results
+    }
+    credentialRequest = function(prover_did,cred_offer,cred_def,secret_id){
+      handle = openWalletFun();
+      results = proverCreateCredentialReq (handle ,prover_did,cred_offer,cred_def,secret_id);
+      closeWalletFun(handle);
+      results
     }
     proofRequest = defaction(){
       noop()
@@ -145,10 +178,26 @@ ruleset G2S.agent {
                                  event:attr("version"), // schema
                                  event:attr("attrNames"), // schema
                                  event:attr("tag"), 
-                                 event:attr("signature_type"), 
-                                 event:attr("cred_def_config"))setting(cred_def)
+                                 event:attr("signature_type").defaultsTo("CL"), 
+                                 event:attr("cred_def_config").defaultsTo({"support_revocation": false}.encode()))setting(cred_def)
       always{
         ent:cred_defs := ent:cred_defs.append([cred_def.klog("cred_def results")])
       }
+  }
+  rule nym {
+    select when agent nym
+    nym(event:attr("signing_did"),
+        event:attr("anchoring_did"),
+        event:attr("anchoring_did_verkey"),
+        event:attr("alias"),
+        event:attr("role")
+        )
+  }
+    rule linkSecret {// Todo, add directives.
+    select when agent create_secret
+    if(ent:secret_id)then
+    noop()
+    fired{}
+    else{ent:secret_id:= createLinkSecret(null);}
   }
 }

@@ -31,9 +31,9 @@ module.exports = {
     },
     signAndSubmitRequest:{
         type:'function',
-        args:['poolHandle','signing_did','walletHandle','Request'],
+        args:['poolHandle','walletHandle','signing_did','Request'],
         fn  :async function(args){
-            return await sdk.signAndSubmitRequest( parseInt(args.poolHandle, 10),  parseInt(args.walletHandle, 10), args.signing_did, args.Request);
+            return await sdk.signAndSubmitRequest( parseInt(args.poolHandle, 10),parseInt(args.walletHandle, 10), args.signing_did , args.Request);
         }    
     },
     submitRequest:{
@@ -107,7 +107,7 @@ module.exports = {
         }    
     },
     buildSchemaRequest:{
-        type:'action',
+        type:'function',
         args:[ 'submitterDid', 'data'],
         fn  :async function(args){
             return await sdk.buildSchemaRequest( args.submitterDid, args.data );
@@ -117,6 +117,7 @@ module.exports = {
         type:'function',
         args:['submitterDid', 'id' ],
         fn  :async function(args){
+            console.log('args',args);
             return await sdk.buildGetSchemaRequest(args.submitterDid, args.id);
         }    
     },

@@ -14,16 +14,22 @@ module.exports = {
     openWalletFunction:{
         type:'function',
         args:['config','credentials'],
-        fn  :async function(args){            
-            wallets[args.config.id] = await sdk.openWallet(args.config,args.credentials);
+        fn  :async function(args){
+            try {
+                wallets[args.config.id] = await sdk.openWallet(args.config,args.credentials);
+            } catch (error) {
+            }            
             return wallets[args.config.id];
         }
     },
     openWalletAction:{
         type:'action',
         args:['config','credentials'],
-        fn  :async function(args){            
-            wallets[args.config.id] = await sdk.openWallet(args.config,args.credentials);
+        fn  :async function(args){
+            try {
+                wallets[args.config.id] = await sdk.openWallet(args.config,args.credentials);
+            } catch (error) {
+            }            
             return wallets[args.config.id];
         }
     },
