@@ -1,7 +1,7 @@
 ruleset G2S.indy_sdk.ledger {
   meta {
-    shares __testing, getNym,anchorSchema,blocks,getSchema,anchorCredDef,credDefs
-    provides getNym,anchorSchema,blocks,getSchema,anchorCredDef,credDefs
+    shares __testing, getNym,anchorSchema,blocks,getSchema,anchorCredDef,credDefs,createLinkedSecret,issuerCreateCredentialOffer,proverCreateCredentialReq
+    provides getNym,anchorSchema,blocks,getSchema,anchorCredDef,credDefs,createLinkedSecret,issuerCreateCredentialOffer,proverCreateCredentialReq
   }
   global {
     __testing = { "queries":
@@ -74,8 +74,9 @@ ruleset G2S.indy_sdk.ledger {
     proverCreateCredentialReq = function(wallet_handle ,prover_did,cred_offer,cred_def,secret_id){
       anoncred:proverCreateCredentialReq(wallet_handle ,prover_did,cred_offer,cred_def,secret_id)
     }
-    createLinkedSecret = function(wallet_handle, link_secret_id){
-      anoncred:proverCreateMasterSecret(wallet_handle, link_secret_id)
+    createLinkedSecret = defaction(wallet_handle, link_secret_id){
+      anoncred:proverCreateMasterSecret(wallet_handle, link_secret_id) setting(id)
+      returns id
     }
     
   }

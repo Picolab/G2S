@@ -1,7 +1,7 @@
 ruleset G2S.agent {
   meta {
-    shares __testing, ephemeralDids, dids,credentialDefinition,credentialDefinitions
-    provides ephemeralDids, dids,credentialDefinition,credentialDefinitions
+    shares __testing, ephemeralDids, dids,credentialDefinition,credentialDefinitions,credentialOffer,createLinkSecret,linkSecretId
+    provides ephemeralDids, dids,credentialDefinition,credentialDefinitions,credentialOffer,createLinkSecret,linkSecretId
     //provides
     use module G2S.indy_sdk.wallet alias wallet_module
     use module G2S.indy_sdk.ledger alias ledger_module
@@ -11,7 +11,8 @@ ruleset G2S.agent {
   }
   global {
     __testing = { "queries":
-      [ { "name": "__testing" }, /*{"name":"ephemeralDids"},*/{"name":"dids"},{"name":"credentialDefinition","args":["submitterDid", "id"]},{"name":"credentialDefinitions"}
+      [ { "name": "__testing" }, /*{"name":"ephemeralDids"},*/{"name":"dids"},{"name":"credentialDefinition","args":["submitterDid", "id"]},{"name":"credentialDefinitions"},
+        {"name":"credentialOffer","args":"cred_def_id"},{"name":"credentialRequest","args":["prover_did","cred_offer","cred_def"]},{"name":"linkSecretId"}
       //, { "name": "entry", "args": [ "key" ] }
       ] , "events":
       [ //{ "domain": "agent", "type": "create_ephemeral_did" },
@@ -22,7 +23,7 @@ ruleset G2S.agent {
                                                         "anchoring_did_verkey",
                                                         "alias",
                                                         "role"] }
-      //, { "domain": "d2", "type": "t2", "attrs": [ "a1", "a2" ] }
+      , { "domain": "agent", "type": "create_secret"}
       ]
     }
     id = function(){
@@ -110,21 +111,25 @@ ruleset G2S.agent {
         }
         returns results
     }
-    credentialOffer = function(){
+    credentialOffer = function(cred_def_id){
       handle = openWalletFun();
       offer = ledger_module:issuerCreateCredentialOffer(handle,cred_def_id);
       closeWalletFun(handle);
       offer
     }
-    createLinkSecret = function(link_secret_id){
-      handle = openWalletFun();
-      results = createLinkedSecret(handle, link_secret_id);
-      closeWalletFun(handle);
-      results
+    createLinkSecret = defaction(link_secret_id){
+      every{openWallet()setting(handle);
+      ledger_module:createLinkedSecret(handle, link_secret_id)setting(results);
+      closeWallet(handle);
+      }
+      returns results
     }
-    credentialRequest = function(prover_did,cred_offer,cred_def,secret_id){
+    linkSecretId = function(){
+      ent:secret_id
+    }
+    credentialRequest = function(prover_did,cred_offer,cred_def){
       handle = openWalletFun();
-      results = proverCreateCredentialReq (handle ,prover_did,cred_offer,cred_def,secret_id);
+      results = proverCreateCredentialReq (handle ,prover_did,cred_offer,cred_def,ent:secret_id);
       closeWalletFun(handle);
       results
     }
@@ -138,7 +143,8 @@ ruleset G2S.agent {
     //if() then // should check to see if wallet exists.... but indy-sdk does not support this. 
     wallet_module:createWallet(id(),id(),null,null,null )
     always{
-      ent:single_use_dids := []
+      ent:single_use_dids := [];// todo: remove this ....
+      ent:secret_id:= createLinkSecret(null);
     }
   }
   rule createEphemeralDid {
@@ -195,9 +201,8 @@ ruleset G2S.agent {
   }
     rule linkSecret {// Todo, add directives.
     select when agent create_secret
-    if(ent:secret_id)then
-    noop()
-    fired{}
-    else{ent:secret_id:= createLinkSecret(null);}
+    if(ent:secret_id.isnull())then
+       createLinkSecret(null) setting(secretId)
+    fired{ent:secret_id:= secretId}
   }
 }
