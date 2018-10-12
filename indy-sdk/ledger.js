@@ -75,14 +75,8 @@ module.exports = {
         type:'function',
         args:['signingdid','anchoring_did','anchoring_did_verkey','alias','role'],
         fn  :async function(args){
-            let nymRequest;
-            try {
-                nymRequest = await sdk.buildNymRequest(args.signingdid, args.anchoring_did, args.anchoring_did_verkey, args.alias, args.role);
-                } 
-            catch (e) {
-                callback(null,nymRequest);
-            }
-            callback(null,nymRequest);
+                console.log("args",args);
+                return await sdk.buildNymRequest(args.signingdid, args.anchoring_did, args.anchoring_did_verkey, args.alias, args.role);
             }    
     },
     buildAttribRequest:{

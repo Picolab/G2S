@@ -194,5 +194,16 @@ rule create_admin{
       clear ent:owners{name};
     }
   }
+  rule ownerCompleted{
+    select when wrangler child_initialized where rs_attrs{"event_type"} == "account"
+    pre{eci = event:attr("eci") }
+    every{
+      event:send(
+        { "eci": eci,
+          "domain": "wrangler", "type": "autoAcceptConfigUpdate",
+          "attrs": {"variable"    : "Tx_Rx_Type",
+                    "regex_str"   : "Indy" }})
+    }
+  }
 
 }

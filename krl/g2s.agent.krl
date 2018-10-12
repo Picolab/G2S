@@ -1,29 +1,41 @@
 ruleset G2S.agent {
   meta {
-    shares __testing, ephemeralDids, dids,credentialDefinition,credentialDefinitions,credentialOffer,createLinkSecret,linkSecretId
-    provides ephemeralDids, dids,credentialDefinition,credentialDefinitions,credentialOffer,createLinkSecret,linkSecretId
+    shares __testing, ephemeralDids, dids,credentialDefinition,credentialDefinitions,credentialOffer,createLinkSecret,linkSecretId,getNym
+    provides ephemeralDids, dids,credentialDefinition,credentialDefinitions,credentialOffer,createLinkSecret,linkSecretId,getNym
     //provides
     use module G2S.indy_sdk.wallet alias wallet_module
+    use module io.picolabs.subscription alias subscription
     use module G2S.indy_sdk.ledger alias ledger_module
     use module G2S.indy_sdk.pool   alias pool_module
     use module io.picolabs.wrangler alias wrangler 
     
   }
   global {
+    wellknown_Policy = { // we need to restrict what attributes are allowed on this channel, specifically Id.
+      "name": "agent_wellknown",
+      "event": {
+          "allow": [
+              {"domain": "wrangler", "type": "subscription"},
+              {"domain": "wrangler", "type": "new_subscription_request"},
+              {"domain": "wrangler", "type": "inbound_removal"}
+          ]
+      }
+    }
     __testing = { "queries":
       [ { "name": "__testing" }, /*{"name":"ephemeralDids"},*/{"name":"dids"},{"name":"credentialDefinition","args":["submitterDid", "id"]},{"name":"credentialDefinitions"},
-        {"name":"credentialOffer","args":"cred_def_id"},{"name":"credentialRequest","args":["prover_did","cred_offer","cred_def"]},{"name":"linkSecretId"}
+        {"name":"credentialOffer","args":["cred_def_id"]},{"name":"credentialRequest","args":["prover_did","cred_offer","cred_def"]},{"name":"linkSecretId"},
+        { "name": "getNym","args":["submitterDid","targetDid"] }
       //, { "name": "entry", "args": [ "key" ] }
       ] , "events":
       [ //{ "domain": "agent", "type": "create_ephemeral_did" },
         { "domain": "agent", "type": "create_did", "attrs":["did","seed","meta_data"] },
         { "domain": "agent", "type": "create_credential_definition", "attrs":["issuer_did","name","version","attrNames","tag"] },
-        { "domain": "ledger", "type": "nym", "attrs": [ "signing_did",
+        { "domain": "agent", "type": "nym", "attrs": [ "signing_did",
                                                         "anchoring_did",
                                                         "anchoring_did_verkey",
                                                         "alias",
                                                         "role"] }
-      , { "domain": "agent", "type": "create_secret"}
+      , { "domain": "agent", "type": "create_secret"}, { "domain": "agent", "type": "connect","attrs":["destination_did"]}
       ]
     }
     id = function(){
@@ -46,11 +58,17 @@ ruleset G2S.agent {
     }
     openWallet = defaction(){
       wallet_module:openWallet(id(),id()) setting(handle)
-      returns handle
+      returns handle.klog("open wallet")
     }
     closeWallet = defaction(wallet_handle){
       wallet_module:closeWallet(wallet_handle)
     }
+    
+    getNym = function(submitterDid,targetDid){
+      request = ledger:buildGetNymRequest(submitterDid,targetDid);
+      ledger:submitRequest(pool_module:handle(),request);
+    }
+    
     newDid = defaction(did, seed, crypto_type, cid,meta_data){
       every{
         openWallet() setting(handle)
@@ -62,9 +80,9 @@ ruleset G2S.agent {
     
     newNym = defaction(signing_did,anchoring_did,anchoring_did_verkey,alias,role){
       every{
-      openWallet() setting(handle)
-      ledger_module:nym(pool_module:handle(),signing_did,anchoring_did,anchoring_did_verkey,alias,role,handle) setting(results)
-      closeWallet(handle)
+      openWallet() setting(wallet_handle)
+      ledger_module:nym(pool_module:handle(),signing_did,anchoring_did,anchoring_did_verkey,alias,role,wallet_handle.klog(walletHandle)) setting(results)
+      closeWallet(wallet_handle)
       }
       returns results
     }
@@ -102,8 +120,7 @@ ruleset G2S.agent {
     }
     createCredentialDefinition = defaction(issuer_did,name,version,attrNames,tag, signature_type, cred_def_config){
         handle = openWalletFun()
-        results = ledger_module:anchorSchema(pool_module:handle(),handle.klog("walletHandle1"),issuer_did,issuer_did,name,version,["first","second"]/*attrNames.decode()*/).klog("returned anchor schema in agent");
-        // need to get schema_id from the results above
+        results = ledger_module:anchorSchema(pool_module:handle(),handle.klog("walletHandle1"),issuer_did,issuer_did,name,version,attrNames.decode().klog("attr names")).klog("returned anchor schema in agent");
         id_schema_schema = ledger_module:getSchema(pool_module:handle(),issuer_did,results{"result"}{"txnMetadata"}{"txnId"}.klog("schemaid")).klog("getschema ");// can we skip this step and use schema from above?
         every{
           ledger_module:anchorCredDef(pool_module:handle(),handle, issuer_did,id_schema_schema[1].klog("schema"),tag, signature_type, cred_def_config)setting(results);
@@ -136,16 +153,54 @@ ruleset G2S.agent {
     proofRequest = defaction(){
       noop()
     }
+    initiate_subscription = defaction(eci) {
+      every{
+        event:send({
+          "eci": eci, "eid": "subscription",
+          "domain": "wrangler", "type": "subscription",
+          "attrs": {
+                   "Rx_role"     : "agent",
+                   "Tx_role"     : "agent",
+                   "Tx_Rx_Type"  : "Indy" , // auto_accept
+                   "channel_type": "Indy",
+                   "wellKnown_Tx": subscription:wellKnown_Rx(){"id"} 
+                   } 
+        })
+      }
+    }
+    
+    
   }
   rule constructor {
     select when wrangler ruleset_added where event:attr("rids") >< meta:rid
     pre{}
     //if() then // should check to see if wallet exists.... but indy-sdk does not support this. 
-    wallet_module:createWallet(id(),id(),null,null,null )
+      every{
+        wallet_module:createWallet(id(),id(),null,null,null )
+        createLinkSecret(null)setting(secretId)
+      }
     always{
       ent:single_use_dids := [];// todo: remove this ....
-      ent:secret_id:= createLinkSecret(null);
+      ent:secret_id:= secretId;
+      raise wrangler event "autoAcceptConfigUpdate"
+        attributes {"variable"    : "Tx_Rx_Type",
+                    "regex_str"   : "Indy" };
     }
+  }
+  rule create_wellKnown_Rx {
+    select when wrangler ruleset_added where event:attr("rids") >< meta:rid
+    pre{ channel = subscription:wellKnown_Rx() }
+    if(channel.isnull() || channel{"type"} != "Tx_Rx") then every{
+      wrangler:newPolicy(wellknown_Policy) setting(__wellknown_Policy)
+      wrangler:createChannel(meta:picoId, "wellKnown_Rx", "Tx_Rx", __wellknown_Policy{"id"})
+    }
+    fired{
+      raise wrangler event "wellKnown_Rx_created" attributes event:attrs;
+      ent:wellknown_Policy := __wellknown_Policy;
+    }
+    //else{
+    //  raise wrangler event "wellKnown_Rx_not_created" attributes event:attrs; //exists
+    //}
   }
   rule createEphemeralDid {
     select when agent create_ephemeral_did
@@ -192,17 +247,22 @@ ruleset G2S.agent {
   }
   rule nym {
     select when agent nym
-    nym(event:attr("signing_did"),
+    newNym(event:attr("signing_did"),
         event:attr("anchoring_did"),
         event:attr("anchoring_did_verkey"),
         event:attr("alias"),
         event:attr("role")
         )
   }
-    rule linkSecret {// Todo, add directives.
+  rule linkSecret {// Todo, add directives.
     select when agent create_secret
     if(ent:secret_id.isnull())then
        createLinkSecret(null) setting(secretId)
     fired{ent:secret_id:= secretId}
   }
+  rule connection {
+    select when agent connect
+    initiate_subscription(event:attr("destination_did"))
+  }
+  
 }

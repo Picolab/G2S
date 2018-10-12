@@ -58,7 +58,11 @@ module.exports = {
         type:'action',
         args:['config','credentials'],
         fn  :async function(args){
-            return await sdk.createWallet(args.config,args.credentials);
+            let results;
+            try {
+                results = await sdk.createWallet(args.config,args.credentials);
+            } catch (error) { }
+            return results
         }
     },
     deleteWallet:{

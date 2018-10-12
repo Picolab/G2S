@@ -1,7 +1,7 @@
 ruleset G2S.indy_sdk.ledger {
   meta {
-    shares __testing, getNym,anchorSchema,blocks,getSchema,anchorCredDef,credDefs,createLinkedSecret,issuerCreateCredentialOffer,proverCreateCredentialReq
-    provides getNym,anchorSchema,blocks,getSchema,anchorCredDef,credDefs,createLinkedSecret,issuerCreateCredentialOffer,proverCreateCredentialReq
+    shares __testing, getNym,anchorSchema,blocks,getSchema,anchorCredDef,credDefs,createLinkedSecret,issuerCreateCredentialOffer,proverCreateCredentialReq,nym
+    provides getNym,anchorSchema,blocks,getSchema,anchorCredDef,credDefs,createLinkedSecret,issuerCreateCredentialOffer,proverCreateCredentialReq,nym
   }
   global {
     __testing = { "queries":
@@ -32,11 +32,11 @@ ruleset G2S.indy_sdk.ledger {
                                anchoring_did,
                                anchoring_did_verkey,
                                alias,
-                               role)
-      response = ledger:signAndSubmitRequest(pool_handle,
-                                    signing_did,
+                               role).klog("nymrequest")
+      response = ledger:signAndSubmitRequest(pool_handle.klog("wallet handle"),
                                     wallet_handle,
-                                    request)                         
+                                    signing_did,
+                                    request).klog("send nym request")                         
       send_directive("nym transaction");
       returns response
     }
@@ -44,7 +44,7 @@ ruleset G2S.indy_sdk.ledger {
     anchorSchema = function(pool_handle,wallet_handle,submitter_did,issuerDid,name,version,attrNames){
       schema_id_schema = anoncred:issuerCreateSchema(issuerDid,name,version,attrNames).klog("issuercreateschema"); // returns [schema_id,schema]
       request = ledger:buildSchemaRequest(submitter_did,schema_id_schema[1]).klog("buildSchemaRequest");
-      ledger:signAndSubmitRequest(pool_handle,wallet_handle.klog("wallethandle2"),submitter_did,request).klog("singSubmit in anchorSchema")
+      ledger:signAndSubmitRequest(pool_handle,wallet_handle,submitter_did,request).klog("singSubmit in anchorSchema")
     }
     
     getSchema = function(pool_handle,submitter_did,schema_id){
