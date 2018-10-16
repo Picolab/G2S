@@ -1,7 +1,9 @@
 ruleset G2S.agent {
   meta {
-    shares __testing, ephemeralDids, dids,credentialDefinition,credentialDefinitions,credentialOffer,createLinkSecret,linkSecretId,getNym
-    provides ephemeralDids, dids,credentialDefinition,credentialDefinitions,credentialOffer,createLinkSecret,linkSecretId,getNym
+    shares __testing, ephemeralDids, dids,credentialDefinition,
+      credentialDefinitions,credentialOffer,createLinkSecret,linkSecretId,getNym,credentialRequest,createCredential,proofRequest
+    provides ephemeralDids, dids,credentialDefinition,credentialDefinitions,
+      credentialOffer,createLinkSecret,linkSecretId,getNym,credentialRequest,createCredential,proofRequest
     //provides
     use module G2S.indy_sdk.wallet alias wallet_module
     use module io.picolabs.subscription alias subscription
@@ -24,7 +26,9 @@ ruleset G2S.agent {
     __testing = { "queries":
       [ { "name": "__testing" }, /*{"name":"ephemeralDids"},*/{"name":"dids"},{"name":"credentialDefinition","args":["submitterDid", "id"]},{"name":"credentialDefinitions"},
         {"name":"credentialOffer","args":["cred_def_id"]},{"name":"credentialRequest","args":["prover_did","cred_offer","cred_def"]},{"name":"linkSecretId"},
-        { "name": "getNym","args":["submitterDid","targetDid"] }
+        { "name": "getNym","args":["submitterDid","targetDid"] },{"name":"createCredential","args":["credOffer", "credReq", "credValues", "revRegId", "blobStorageReaderHandle"]},
+        {"name":"storeCredential","args":["credId", "credReqMetadata", "cred", "credDef", "revRegDef"]},
+        {"name":"proofRequest","args":[ "name", "version", "requested_attributes", "requested_predicates"]}
       //, { "name": "entry", "args": [ "key" ] }
       ] , "events":
       [ //{ "domain": "agent", "type": "create_ephemeral_did" },
@@ -146,13 +150,46 @@ ruleset G2S.agent {
     }
     credentialRequest = function(prover_did,cred_offer,cred_def){
       handle = openWalletFun();
-      results = proverCreateCredentialReq (handle ,prover_did,cred_offer,cred_def,ent:secret_id);
+      results = ledger_module:proverCreateCredentialReq(handle ,prover_did,cred_offer,cred_def,ent:secret_id);
       closeWalletFun(handle);
       results
     }
-    proofRequest = defaction(){
-      noop()
+    createCredential = function(credOffer, credReq, credValues, revRegId, blobStorageReaderHandle){
+      handle = openWalletFun();
+      results = ledger_module:createCred(handle, credOffer, credReq, credValues, revRegId, blobStorageReaderHandle);
+      closeWalletFun(handle);
+      results
     }
+    storeCredential = defaction( credId, credReqMetadata, cred, credDef, revRegDef){
+      every{
+        openWallet()setting(handle);
+        ledger_module:storeCred(handle, credId, credReqMetadata, cred, credDef, revRegDef)setting(results)
+        closeWallet(handle);
+      }
+      returns results
+    }
+    proofRequest = function(nonce, name, version, requested_attributes, requested_predicates){
+      {
+        "nonce": nonce.defaultsTo(random:integer(9432422343242122312411212)),
+        "name": name,
+        "version": version,
+        "requested_attributes": requested_attributes,
+        "requested_predicates": requested_predicates
+      }
+    }
+    credentialForRequest = function(){
+      handle = openWalletFun();
+      results = ledger_module:this;
+      closeWalletFun(handle);
+      results
+    }
+    searchForCredentialRequest = function(query){
+      handle = openWalletFun();
+      results = ledger_module:searchCredWithReq(handle,query);
+      closeWalletFun(handle);
+      results
+    }
+    
     initiate_subscription = defaction(eci) {
       every{
         event:send({
@@ -198,9 +235,7 @@ ruleset G2S.agent {
       raise wrangler event "wellKnown_Rx_created" attributes event:attrs;
       ent:wellknown_Policy := __wellknown_Policy;
     }
-    //else{
-    //  raise wrangler event "wellKnown_Rx_not_created" attributes event:attrs; //exists
-    //}
+
   }
   rule createEphemeralDid {
     select when agent create_ephemeral_did

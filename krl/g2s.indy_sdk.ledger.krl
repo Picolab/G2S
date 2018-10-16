@@ -1,7 +1,9 @@
 ruleset G2S.indy_sdk.ledger {
   meta {
-    shares __testing, getNym,anchorSchema,blocks,getSchema,anchorCredDef,credDefs,createLinkedSecret,issuerCreateCredentialOffer,proverCreateCredentialReq,nym
-    provides getNym,anchorSchema,blocks,getSchema,anchorCredDef,credDefs,createLinkedSecret,issuerCreateCredentialOffer,proverCreateCredentialReq,nym
+    shares __testing, getNym,anchorSchema,blocks,getSchema,anchorCredDef,
+      credDefs,createLinkedSecret,issuerCreateCredentialOffer,proverCreateCredentialReq,nym,createCred,storeCred,searchCredWithReq
+    provides getNym,anchorSchema,blocks,getSchema,anchorCredDef,
+      credDefs,createLinkedSecret,issuerCreateCredentialOffer,proverCreateCredentialReq,nym,createCred,storeCred,searchCredWithReq
   }
   global {
     __testing = { "queries":
@@ -78,7 +80,16 @@ ruleset G2S.indy_sdk.ledger {
       anoncred:proverCreateMasterSecret(wallet_handle, link_secret_id) setting(id)
       returns id
     }
-    
+    createCred = function(wh, credOffer, credReq, credValues, revRegId, blobStorageReaderHandle){
+      anoncred:issuerCreateCredential(wh, credOffer, credReq, credValues, revRegId, blobStorageReaderHandle)
+    }
+    storeCred = defaction(wh, credId, credReqMetadata, cred, credDef, revRegDef){
+      anoncred:proverStoreCredential(wh, credId, credReqMetadata, cred, credDef, revRegDef)setting(results)
+      returns results
+    }
+    searchCredWithReq = function(wh,query){
+      anoncred:proverSearchCredentials(wh,query)
+    }
   }
   rule nym {
     select when ledger nym

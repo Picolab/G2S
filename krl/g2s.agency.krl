@@ -35,18 +35,7 @@ ruleset G2S.agency {
     }
   }
 
-  rule agentCreated {
-    select when wrangler child_initialized where rs_attrs{"event_type"} == "agent_creation"
-    pre{eci = event:attr("eci") }
-    every{
-      event:send(
-        { "eci": eci,
-          "domain": "wrangler", "type": "autoAcceptConfigUpdate",
-          "attrs": {"variable"    : "Tx_Rx_Type",
-                    "regex_str"   : "Manifold" }})
-    }
-  }
-  rule generateQRcod {
+  rule generateQRcode {
     select when agency generate_qr_code_offer
   }
 }

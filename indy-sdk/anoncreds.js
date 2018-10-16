@@ -32,8 +32,8 @@ module.exports = {
         }
     },
     issuerCreateCredential:{
-        type:'action',
-        args:['wh', 'args.credOffer', 'credReq', 'credValues', 'revRegId', 'blobStorageReaderHandle'],
+        type:'function',
+        args:['wh', 'credOffer', 'credReq', 'credValues', 'revRegId', 'blobStorageReaderHandle'],
         fn  :async function(args){
             return await sdk.issuerCreateCredential(args.wh, args.credOffer, args.credReq, args.credValues, args.revRegId, args.blobStorageReaderHandle );
         }
@@ -86,6 +86,24 @@ module.exports = {
         fn  :async function(args){
             return await sdk.proverGetCredential(args.wh, args.credId );
         }
+    },
+    handleProof:{
+        type:'function',
+        args:[],
+        fn  :async function(){
+            let results= {};
+            search_for_job_proof_request = await sdk.proverSearchCredentials(args.wh, args.query );
+            for (let index = 0; index < args.disclosed_attributes.length; index++) {
+                credentials = await sdk.proverFetchCredentials(args.sh, args.count )
+                results[credentials[0].cred_info.referent] = credentials[0].cred_info;
+            }
+            for (let index = 0; index < args.disclosed_predicates.length; index++) {
+                credentials = await sdk.proverFetchCredentials(args.sh, args.count )
+                results[credentials[0].cred_info.referent] = credentials[0].cred_info;
+            }
+
+        }
+
     },
     proverSearchCredentials:{
         type:'function',

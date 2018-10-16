@@ -7,16 +7,19 @@ module.exports = {
         type:'function',
         args:['poolHandle','submitterDid', 'ledgerType'],
         fn  :async function(args){
-            let error = '', results=[] ;
+            let error = '' ;
+            console.log("args",args)
             while (true) {
                 try {
-                    request = sdk.buildGetTxnRequest ( submitterDid, ledgerType, last_transaction )
-                    results.append(sdk.submitRequest(poolHandle,request));
+                    request = await sdk.buildGetTxnRequest ( args.submitterDid, args.ledgerType, last_transaction )
+                    response = await sdk.submitRequest(parseInt(args.poolHandle, 10),request);
+                    console.log("block ",response,last_transaction);
+                    transactions.push(response);
                     last_transaction ++;
                 } catch (error) {
                     console.log(error);
                     last_transaction = 0;
-                    return results;  
+                    return transactions;  
                 } 
             }
         }    
