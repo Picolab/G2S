@@ -14,6 +14,7 @@ import asyncio
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
+# dids
 gov   = ""
 faber = ""
 acme  = ""
@@ -31,12 +32,11 @@ async def run():
     response = requests.post(url, json=data)
 
     logger.info("==============================")
-    logger.info("=== Getting Trust Anchor credentials for Faber, Acme, Thrift and Government  ==")
+    logger.info("=== Getting Trust Anchor permissions for Faber, Acme, Thrift and Government using steward did ==")
     logger.info("------------------------------")
 
-
     logger.info("==============================")
-    logger.info("== Getting Trust Anchor credentials - Government getting Verinym  ==")
+    logger.info("== Creating Government Verinym ==")
     logger.info("------------------------------")
 
     # get_verinym(pool_handle, "Sovrin Steward", steward_wallet[0], steward_did,
@@ -44,21 +44,21 @@ async def run():
     #                                    'TRUST_ANCHOR')
 
     logger.info("==============================")
-    logger.info("== Getting Trust Anchor credentials - Faber getting a Verinym  ==")
+    logger.info("== Creating Faber Verinym  ==")
     logger.info("------------------------------")
 
     # get_verinym(pool_handle, "Sovrin Steward", steward_wallet[0], steward_did,
     #                              "Faber", faber_wallet[0], 'TRUST_ANCHOR')
 
     logger.info("==============================")
-    logger.info("== Getting Trust Anchor credentials - Acme getting a Verinym  ==")
+    logger.info("== Creating Acme Verinym  ==")
     logger.info("------------------------------")
 
     # await get_verinym(pool_handle, "Sovrin Steward", steward_wallet[0], steward_did,
     #                             "Acme", acme_wallet[0], 'TRUST_ANCHOR')
 
     logger.info("==============================")
-    logger.info("== Getting Trust Anchor credentials - Thrift getting a Verinym  ==")
+    logger.info("== Creating Thrift Verinym  ==")
     logger.info("------------------------------")
 
     # get_verinym(pool_handle, "Sovrin Steward", steward_wallet[0], steward_did,

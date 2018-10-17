@@ -11,7 +11,10 @@ ruleset G2S.agency {
       //, { "domain": "d2", "type": "t2", "attrs": [ "a1", "a2" ] }
       ]
     }
-    config={"pico_name" : "agentTest", "rids": ["io.picolabs.subscription"]};
+    config={"rids": ["G2S.indy_sdk.ledger"
+                    ,"G2S.indy_sdk.pool"
+                    ,"G2S.indy_sdk.wallet"
+                    ,"G2S.agent"]};
     
   }
   rule constructor {
@@ -28,10 +31,17 @@ ruleset G2S.agency {
     select when agency SIGNUP
   }
   rule CREATE_AGENT {
-    select when agency CREATE_AGENT
+    select when agency CREATE
     always {
       raise wrangler event "child_creation" 
-        attributes { "name": config{"pico_name"}, "color": "#7FFFD4", "rids": config{"rids"},"event_type": "agent_creation" }
+        attributes { "name": event:attr("name"), "color": "#7FFFD4", "rids": config{"rids"},"event_type": "agent_create" }
+    }
+  }
+  rule delete_agent {
+    select when agency DELETE
+    always {
+      raise wrangler event "child_deletion" 
+        attributes { "name": event:attr("name"), "rids": config{"rids"},"event_type": "agent_delete" }
     }
   }
 
