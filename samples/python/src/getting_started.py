@@ -14,7 +14,9 @@ import asyncio
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
+_host = "http://172.31.182.113:8080"
 # dids
+agency = "PFR1KHahcYRtoJJGSAQYBJ"
 gov   = ""
 faber = ""
 acme  = ""
@@ -23,13 +25,27 @@ thrift= ""
 
 async def run():
     logger.info("Getting started -> started")
-    
+    logger.info("\"Agency\" -> Create gov, faber, acme, thrift and alice")
+
+    gov   = event_send(agency,"agency","CREATE",{"name":"gov"    }).json()["directives"][0]["options"]["pico"]["eci"]
+    faber = event_send(agency,"agency","CREATE",{"name":"faber"  }).json()["directives"][0]["options"]["pico"]["eci"]
+    acme  = event_send(agency,"agency","CREATE",{"name":"acme"   }).json()["directives"][0]["options"]["pico"]["eci"]
+    thrift= event_send(agency,"agency","CREATE",{"name":"thrift" }).json()["directives"][0]["options"]["pico"]["eci"]
+    alice = event_send(agency,"agency","CREATE",{"name":"alice"  }).json()["directives"][0]["options"]["pico"]["eci"]
+
+    input("Agents have been created, feel free to check, Press Enter to continue...")
+
+    logger.info("\ngov:{} \n faber:{} \n acme:{} \n thrift:{}\n alice:{}\n".format(gov,faber,acme,thrift,alice))
     
     logger.info("\"Sovrin Steward\" -> Create and store in Wallet DID from seed")
-    steward_did_info = {'seed': '000000000000000000000000Steward1'} # this generates the same keys used in the genisis file 
-    # did.create_and_store_my_did(steward_wallet[0], json.dumps(steward_did_info))
-    data = {"data" : "24.3"}
-    response = requests.post(url, json=data)
+
+    event_send(gov,"agent","create_did",{"seed":"000000000000000000000000Steward1","meta_data":"steward_did"})# this generates the same keys used in the genisis file 
+    input("Steward did generated, Press Enter to continue...")
+    
+    logger.info("==============================")
+    logger.info("===      Subscriptions      ==")
+    logger.info("------------------------------")
+
 
     logger.info("==============================")
     logger.info("=== Getting Trust Anchor permissions for Faber, Acme, Thrift and Government using steward did ==")
@@ -39,9 +55,15 @@ async def run():
     logger.info("== Creating Government Verinym ==")
     logger.info("------------------------------")
 
+    did = event_send(gov,"agent","create_did",{"meta_data":"TRUST_ANCHOR"})
+    logger.info(did)
+    
+    did = event_send(gov,"agent","nym",{"seed":"000000000000000000000000Steward1","meta_data":"TRUST_ANCHOR"})
+    logger.info(did)
     # get_verinym(pool_handle, "Sovrin Steward", steward_wallet[0], steward_did,
     #                                    "Government", government_wallet[0],
     #                                    'TRUST_ANCHOR')
+    input("Press Enter to continue...")
 
     logger.info("==============================")
     logger.info("== Creating Faber Verinym  ==")
@@ -112,7 +134,7 @@ async def run():
     logger.info("==============================")
     logger.info("=== Getting Transcript with Faber ==")
     logger.info("==============================")
-    logger.info("== Getting Transcript with Faber - Onboarding ==")
+    logger.info("== Alice Faber - Onboarding (subscription) ==")
     logger.info("------------------------------")
 
     # await did.create_and_store_my_did(alice_wallet[0], "{}") # did for get_cred_def_request
@@ -515,9 +537,18 @@ async def run():
                                                  schemas_json, cred_defs_json, revoc_defs_json, revoc_regs_json)
 
     '''
+    logger.info("Remove gov, faber, acme and thrift agents")
+    
+    event_send(agency,"agency","DELETE",{"name":"gov"    })
+    event_send(agency,"agency","DELETE",{"name":"faber"  })
+    event_send(agency,"agency","DELETE",{"name":"acme"   })
+    event_send(agency,"agency","DELETE",{"name":"thrift" })
+
     logger.info("Getting started -> done")
 
-
+def event_send(eci,domain,type,attrs):
+    return requests.post(_host+"/sky/event/"+eci+"/none/"+domain+"/"+type,params=attrs)
 if __name__ == '__main__':
-    run_coroutine(run)
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(run())
     time.sleep(1)  # FIXME waiting for libindy thread complete

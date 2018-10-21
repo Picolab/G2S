@@ -67,7 +67,9 @@ ruleset G2S.agent {
     closeWallet = defaction(wallet_handle){
       wallet_module:closeWallet(wallet_handle)
     }
-    
+    deleteWallet = defaction(id,key,storage_type,storage_config,path){
+      wallet_module:deleteWallet(id,key,storage_type,storage_config,path)
+    }
     getNym = function(submitterDid,targetDid){
       request = ledger:buildGetNymRequest(submitterDid,targetDid);
       ledger:submitRequest(pool_module:handle(),request);
@@ -298,6 +300,11 @@ ruleset G2S.agent {
   rule connection {
     select when agent connect
     initiate_subscription(event:attr("destination_did"))
+  }
+  rule deleteWallet {
+    select when pico intent_to_orphan or wrangler garbage_collection
+    //if() then // should check to see if wallet exists.... but indy-sdk does not support this. 
+      wallet_module:deleteWallet(id(),id(),null,null,null )
   }
   
 }

@@ -5,13 +5,14 @@ ruleset G2S.indy_sdk.wallet {
       use example, use module G2S.indy_sdk.wallet alias wallet.
       This Ruleset/Module provides...
     >>
-    shares __testing, wallets, listDids, openWallet, closeWallet,createWallet,newDid,openWalletFun,closeWalletFun
-    provides __testing, wallets, listDids, openWallet, closeWallet,createWallet,newDid,openWalletFun,closeWalletFun
+    shares __testing, wallets, listDids,openWalletFun, openWallet, closeWallet,createWallet,newDid,openWalletFun,closeWalletFun,deleteWallet
+    provides __testing, wallets, listDids,openWalletFun, openWallet, closeWallet,createWallet,newDid,openWalletFun,closeWalletFun,deleteWallet
   }
   global {
     wallet={}
     __testing = { "queries":
-      [ { "name": "wallets" },{"name":"listDids","args":["walletHandle"]}
+      [ { "name": "wallets" },{"name":"listDids","args":["walletHandle"]},
+        {"name":"openWalletFun"}
       //, { "name": "entry", "args": [ "key" ] }
       ] , "events":
       [ //{ "domain": "wallet", "type": "open", "attrs":["walletName","key"] },
@@ -70,6 +71,19 @@ ruleset G2S.indy_sdk.wallet {
     }
     closeWallet = defaction(wallet_handle){
       wallet:closeWalletAction(wallet_handle)
+    }
+    deleteWallet = defaction(id,key,storage_type,storage_config,path ){
+      config    = id => {}.put("id",id) | {}
+      _config   = storage_type => config.put("storage_type", storage_type) | config
+      __config  = storage_config => _config.put("storage_config", storage_config) | _config
+      ___config = path => __config.put("path", path) | __config
+      credentials = {"key": key}
+      every{
+          wallet:deleteWallet(___config,credentials) setting(results)
+          send_directive("wallet deleted with",  {"config":___config, "credentials":credentials, "results":results});
+      }
+        returns results
+      
     }
 
   }
