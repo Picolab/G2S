@@ -27,26 +27,29 @@ async def run():
     logger.info("Getting started -> started")
     logger.info("\"Agency\" -> Create gov, faber, acme, thrift and alice")
 
-    gov   = event_send(agency,"agency","CREATE",{"name":"gov"    }).json()["directives"][0]["options"]["pico"]["eci"]
-    faber = event_send(agency,"agency","CREATE",{"name":"faber"  }).json()["directives"][0]["options"]["pico"]["eci"]
-    acme  = event_send(agency,"agency","CREATE",{"name":"acme"   }).json()["directives"][0]["options"]["pico"]["eci"]
-    thrift= event_send(agency,"agency","CREATE",{"name":"thrift" }).json()["directives"][0]["options"]["pico"]["eci"]
-    alice = event_send(agency,"agency","CREATE",{"name":"alice"  }).json()["directives"][0]["options"]["pico"]["eci"]
+    gov   = event_send(agency,"agency","CREATE",{"name":"gov"    })[0]["options"]["pico"]["eci"]
+    faber = event_send(agency,"agency","CREATE",{"name":"faber"  })[0]["options"]["pico"]["eci"]
+    acme  = event_send(agency,"agency","CREATE",{"name":"acme"   })[0]["options"]["pico"]["eci"]
+    thrift= event_send(agency,"agency","CREATE",{"name":"thrift" })[0]["options"]["pico"]["eci"]
+    alice = event_send(agency,"agency","CREATE",{"name":"alice"  })[0]["options"]["pico"]["eci"]
 
-    input("Agents have been created, feel free to check, Press Enter to continue...")
+    #input("Agents have been created, feel free to check, Press Enter to continue...")
 
     logger.info("\ngov:{} \n faber:{} \n acme:{} \n thrift:{}\n alice:{}\n".format(gov,faber,acme,thrift,alice))
     
     logger.info("\"Sovrin Steward\" -> Create and store in Wallet DID from seed")
 
-    event_send(gov,"agent","create_did",{"seed":"000000000000000000000000Steward1","meta_data":"steward_did"})# this generates the same keys used in the genisis file 
-    input("Steward did generated, Press Enter to continue...")
+    steward_did = event_send(gov,"agent","create_did",{"seed":"000000000000000000000000Steward1","meta_data":"steward_did"})[0]["options"]["didVerkey"][0]# this generates the same keys used in the genisis file 
+    #input("Steward did generated, Press Enter to continue...")
     
     logger.info("==============================")
-    logger.info("===      Subscriptions      ==")
+    logger.info("=== Subscriptions for Verinym ==")
     logger.info("------------------------------")
 
-
+    faberGovSid  = subscription(gov, faber ,"Faber" ,"Gov")
+    acmeGovSid   = subscription(gov, acme  ,"Acme"  ,"Gov")
+    thriftGovSid = subscription(gov, thrift,"Thrift","Gov")
+    
     logger.info("==============================")
     logger.info("=== Getting Trust Anchor permissions for Faber, Acme, Thrift and Government using steward did ==")
     logger.info("------------------------------")
@@ -55,162 +58,165 @@ async def run():
     logger.info("== Creating Government Verinym ==")
     logger.info("------------------------------")
 
-    did = event_send(gov,"agent","create_did",{"meta_data":"TRUST_ANCHOR"})
-    logger.info(did)
-    
-    did = event_send(gov,"agent","nym",{"seed":"000000000000000000000000Steward1","meta_data":"TRUST_ANCHOR"})
-    logger.info(did)
-    # get_verinym(pool_handle, "Sovrin Steward", steward_wallet[0], steward_did,
-    #                                    "Government", government_wallet[0],
-    #                                    'TRUST_ANCHOR')
-    input("Press Enter to continue...")
+    govDidVerkey = event_send(gov,"agent","create_did",{"meta_data":"TRUST_ANCHOR"})[0]["options"]["didVerkey"]
+    #logger.info(govDidVerkey)
+    event_send(gov,"agent","nym",{"signing_did":steward_did,"anchoring_did"       :govDidVerkey[0],
+                                                            "anchoring_did_verkey":govDidVerkey[1],
+                                                            "alias"               :"Gov",
+                                                            "role":"TRUST_ANCHOR"}) # bootstrap gov with trust anchor did.
+    #input("Press Enter to continue...")
 
     logger.info("==============================")
     logger.info("== Creating Faber Verinym  ==")
     logger.info("------------------------------")
-
-    # get_verinym(pool_handle, "Sovrin Steward", steward_wallet[0], steward_did,
-    #                              "Faber", faber_wallet[0], 'TRUST_ANCHOR')
+    
+    # must use steward did, 'TRUST_ANCHOR cannot add TRUST_ANCHOR'
+    faberDidVerkey = get_verinym(gov,faber,"TRUST_ANCHOR","Faber",steward_did,faberGovSid)
+    #input("Press Enter to continue...")
 
     logger.info("==============================")
     logger.info("== Creating Acme Verinym  ==")
     logger.info("------------------------------")
 
-    # await get_verinym(pool_handle, "Sovrin Steward", steward_wallet[0], steward_did,
-    #                             "Acme", acme_wallet[0], 'TRUST_ANCHOR')
+    acmDidVerkey = get_verinym(gov,acme,"TRUST_ANCHOR","Acme",steward_did,acmeGovSid)
 
     logger.info("==============================")
     logger.info("== Creating Thrift Verinym  ==")
     logger.info("------------------------------")
 
-    # get_verinym(pool_handle, "Sovrin Steward", steward_wallet[0], steward_did,
-    #                               "Thrift", thrift_wallet[0], 'TRUST_ANCHOR')
+    thriftDidVerkey = get_verinym(gov,thrift,"TRUST_ANCHOR","Faber",steward_did,thriftGovSid)
 
     logger.info("==============================")
-    logger.info("=== Credential Schemas Setup ==")
+    logger.info("=== Credential definitions ==")
     logger.info("------------------------------")
 
     logger.info("\"Government\" -> Create \"Job-Certificate\" Schema")
     
-    #anoncreds.issuer_create_schema(government_did, 'Job-Certificate', '0.2',
-    #                                         json.dumps(['first_name', 'last_name', 'salary', 'employee_status',
-    #                                                     'experience']))
+    JobCertificateSchemaId = event_send(gov,"agent","create_schema",{"issuer_did":govDidVerkey[0],
+                   "name":"Job-Certificate",
+                   "version":"0.2",
+                   "attrNames":["first_name", "last_name", "salary", "employee_status","experience"]})[0]["options"]["result"]["txnMetadata"]["txnId"]
+    logger.info(JobCertificateSchemaId)
 
-    #logger.info("\"Government\" -> Send \"Job-Certificate\" Schema to Ledger")
-    # send_schema(pool_handle, government_wallet[0], government_did, job_certificate_schema)
-
-    logger.info("\"Government\" -> Create \"Transcript\" Schema")
-    # anoncreds.issuer_create_schema(government_did, 'Transcript', '1.2',
-    #                                         json.dumps(['first_name', 'last_name', 'degree', 'status',
-    #                                                     'year', 'average', 'ssn']))
-    #logger.info("\"Government\" -> Send \"Transcript\" Schema to Ledger")
-    # send_schema(pool_handle, government_wallet[0], government_did, transcript_schema)
+    TranscriptSchemaId = event_send(gov,"agent","create_schema",{"issuer_did":govDidVerkey[0],
+                   "name":"Transcript",
+                   "version":"1.2",
+                   "attrNames":["first_name", "last_name", "degree", "status","year","average","ssn"]})[0]["options"]["result"]["txnMetadata"]["txnId"]
 
     logger.info("==============================")
-    logger.info("=== Faber Credential Definition Setup ==")
+    logger.info("=== Faber Credential Definition ==")
     logger.info("------------------------------")
 
-    #logger.info("\"Faber\" -> Get \"Transcript\" Schema from Ledger")
-    logger.info("\"Faber\" -> Create and store in Wallet \"Faber Transcript\" Credential Definition")
-    #anoncreds.issuer_create_and_store_credential_def(faber_wallet[0], faber_did, transcript_schema,
-    #                                                           'TAG1', 'CL', '{"support_revocation": false}')
-
-    #logger.info("\"Faber\" -> Send  \"Faber Transcript\" Credential Definition to Ledger")
+    logger.info("\"Faber\" -> Create, store and anchor\"Faber Transcript\" Credential Definition")
+    transcriptCredDefId = event_send(faber ,"agent","create_cred_def",{   
+                    "schema_issuer_did":govDidVerkey[0],
+                    "schema_id":TranscriptSchemaId,
+                    "issueing_did":faberDidVerkey[0],
+                    "tag":"TAG1" } 
+                    ) [0]["options"]["result"]["txnMetadata"]["txnId"]
+    logger.info(transcriptCredDefId)
+    input("-- faber created cred_def --Press Enter to continue...")
 
     logger.info("==============================")
-    logger.info("=== Acme Credential Definition Setup ==")
+    logger.info("=== Acme Credential Definition ==")
     logger.info("------------------------------")
 
-    logger.info("\"Acme\" -> Get from Ledger \"Job-Certificate\" Schema")
-    #await get_schema(pool_handle, acme_did, job_certificate_schema_id)
-
-    logger.info("\"Acme\" -> Create and store in Wallet \"Acme Job-Certificate\" Credential Definition")
-    # anoncreds.issuer_create_and_store_credential_def(acme_wallet[0], acme_did, job_certificate_schema,
-    #                                                           'TAG1', 'CL', '{"support_revocation": false}')
-
-    #logger.info("\"Acme\" -> Send \"Acme Job-Certificate\" Credential Definition to Ledger")
-    # send_cred_def(pool_handle, acme_wallet[0], acme_did, acme_job_certificate_cred_def_json)
+    logger.info("\"Acme\" -> Create, store and anchor \"Acme Job-Certificate\" Credential Definition")
+    jobCertificateCredDefId = event_send(acme ,"agent","create_cred_def",{   
+                    "schema_issuer_did":govDidVerkey[0],
+                    "schema_id":JobCertificateSchemaId,
+                    "issueing_did":acmDidVerkey[0],
+                    "tag":"TAG1" } 
+                    ) [0]["options"]["result"]["txnMetadata"]["txnId"]
 
     logger.info("==============================")
     logger.info("=== Getting Transcript with Faber ==")
     logger.info("==============================")
     logger.info("== Alice Faber - Onboarding (subscription) ==")
     logger.info("------------------------------")
+    
+    aliceFaberSid = subscription(faber, alice ,"Alice" ,"Faber")
 
-    # await did.create_and_store_my_did(alice_wallet[0], "{}") # did for get_cred_def_request
+    aliceDidVerkey = event_send(gov,"agent","create_did",{"meta_data":"faber_cred"})[0]["options"]["didVerkey"] # did for get_cred_def_request
 
     logger.info("==============================")
     logger.info("== Getting Transcript with Faber - Getting Transcript Credential ==")
     logger.info("------------------------------")
 
-    '''logger.info("\"Faber\" -> Create \"Transcript\" Credential Offer for Alice")
-    transcript_cred_offer_json = \
-        await anoncreds.issuer_create_credential_offer(faber_wallet[0], faber_transcript_cred_def_id)
+    logger.info("\"Faber\" -> Create and Send\"Transcript\" Credential Offer for Alice")
+    #offer = sky_cloud_API(rx,"G2S.agent","credentialOffer",{"cred_def_id":jobCertificateCredDefId})
 
-    logger.info("\"Faber\" -> Send \"Transcript\" Credential Offer to Alice")
-
-    transcript_cred_offer = json.loads(transcript_cred_offer_json)
-
-    logger.info("\"Alice\" -> Create and store \"Alice\" Master Secret in Wallet")
-    alice_master_secret_id = await anoncreds.prover_create_master_secret(alice_wallet[0], None)
+    offerId = event_send(faber,"agent","send_credential_offer",{"sid":aliceFaberSid})[0]["options"]["id"]
 
     logger.info("\"Alice\" -> Get \"Faber Transcript\" Credential Definition from Ledger")
-    #----------------------------------------------------------------------------------------------------------------------------------------------------
-    # prover attempt to get cred_def from ledger 
-    #----------------------------------------------------------------------------------------------------------------------------------------------------
-    get_cred_def_request = await ledger.build_get_cred_def_request(alice_faber_did , transcript_cred_offer['cred_def_id'])
-    logger.info("cred request" + json.dumps(get_cred_def_request) )
-    get_cred_def_response = await ledger.submit_request(pool_handle, get_cred_def_request)
-    #logger.info("cred request response" + json.dumps(get_cred_def_response) )
-    (faber_transcript_cred_def_id, faber_transcript_cred_def) = \
-        await ledger.parse_get_cred_def_response(get_cred_def_response)
-    #----------------------------------------------------------------------------------------------------------------------------------------------------
-    #----------------------------------------------------------------------------------------------------------------------------------------------------
-
     logger.info("\"Alice\" -> Create \"Transcript\" Credential Request for Faber")
-    (transcript_cred_request_json, transcript_cred_request_metadata_json) = \
-        await anoncreds.prover_create_credential_req(alice_wallet[0], alice_faber_did,
-                                                     transcript_cred_offer_json,
-                                                     faber_transcript_cred_def, alice_master_secret_id)
-
     logger.info("\"Alice\" -> Send   \"Transcript\" Credential Request to Faber")
-    
-    logger.info("\"Faber\" -> Create \"Transcript\" Credential for Alice")
-    transcript_cred_values = json.dumps({
-        "first_name": {"raw": "Alice", "encoded": "1139481716457488690172217916278103335"},
-        "last_name": {"raw": "Garcia", "encoded": "5321642780241790123587902456789123452"},
-        "degree": {"raw": "Bachelor of Science, Marketing", "encoded": "12434523576212321"},
-        "status": {"raw": "graduated", "encoded": "2213454313412354"},
-        "ssn": {"raw": "123-45-6789", "encoded": "3124141231422543541"},
-        "year": {"raw": "2015", "encoded": "2015"},
-        "average": {"raw": "5", "encoded": "5"}
-    })
 
-    transcript_cred_json, _, _ = \
-        await anoncreds.issuer_create_credential(faber_wallet[0], transcript_cred_offer_json,
-                                                 transcript_cred_request_json, 
-                                                 transcript_cred_values, None, None)
+    requestId = event_send(alice,"agent","accept_credential_offer_with_request",{   "sid"         :aliceFaberSid, 
+                                                                                    "offerId"     :offerId,
+                                                                                    "submitterDid":faberDidVerkey[0],
+                                                                                    "credDefId"   :transcriptCredDefId,
+                                                                                    "proverDid"   :aliceDidVerkey[0],
+                                                                                        })[0]["options"]["id"]
+
+
+    logger.info("\"Faber\" -> Create \"Transcript\" Credential for Alice")
+    event_send(faber,"agent","issue_credential_from_request",{  "sid"        : aliceFaberSid,
+                                                                "requestId"  : requestId ,
+                                                                "credAttributes": {
+                                                                                    "first_name": "Alice",
+                                                                                    "last_name": "Garcia",
+                                                                                    "degree": "Bachelor of Science, Marketing",
+                                                                                    "status": "graduated",
+                                                                                    "ssn": "123-45-6789",
+                                                                                    "year": "2015",
+                                                                                    "average": "5"
+                                                                                } })
+    
+    #transcript_cred_values = {
+    #    "first_name": {"raw": "Alice", "encoded": "1139481716457488690172217916278103335"},
+    #    "last_name": {"raw": "Garcia", "encoded": "5321642780241790123587902456789123452"},
+    #    "degree": {"raw": "Bachelor of Science, Marketing", "encoded": "12434523576212321"},
+    #    "status": {"raw": "graduated", "encoded": "2213454313412354"},
+    #    "ssn": {"raw": "123-45-6789", "encoded": "3124141231422543541"},
+    #    "year": {"raw": "2015", "encoded": "2015"},
+    #    "average": {"raw": "5", "encoded": "5"}
+    #}
+    
+    # await anoncreds.issuer_create_credential(faber_wallet[0], transcript_cred_offer_json, transcript_cred_request_json, transcript_cred_values, None, None)
 
     logger.info("\"Faber\" -> Send \"Transcript\" Credential to Alice")
 
     logger.info("\"Alice\" -> Store \"Transcript\" Credential from Faber")
-    await anoncreds.prover_store_credential(alice_wallet[0], None, transcript_cred_request_metadata_json,
-                                            transcript_cred_json, faber_transcript_cred_def, None)
+
+    # await anoncreds.prover_store_credential(alice_wallet[0], None, transcript_cred_request_metadata_json, transcript_cred_json, faber_transcript_cred_def, None)
 
     logger.info("==============================")
     logger.info("=== Apply for the job with Acme ==")
     logger.info("==============================")
-    logger.info("== Apply for the job with Acme - Onboarding ==")
+    logger.info("== Apply for the job with Acme - Onboarding (subscription) ==")
     logger.info("------------------------------")
 
-    ( alice_acme_did, _ ) = await did.create_and_store_my_did(alice_wallet[0], "{}") # did for cred
+    aliceAcmeSid = subscription(acme, alice ,"Alice" ,"Acme")
 
     logger.info("==============================")
     logger.info("== Apply for the job with Acme - Transcript proving ==")
     logger.info("------------------------------")
 
     logger.info("\"Acme\" -> Create \"Job-Application\" Proof Request")
-    job_application_proof_request_json = json.dumps({
+    '''
+    The flow is now (python):
+        -`prover_search_credentials_for_proof_req` which returns a search handle (passing the proof req. json).
+        -`prover_fetch_credentials_for_proof_req` passing the search handle and the number of hits you want, and the 
+            'referent' (ie "ssn_referent") from your proof request. You can do this multiple times if your referents 
+            were in different credentials. But if everything is in one credential, then you only have to do this once (not 100% on that part).
+        - and then close the search handle with `prover_close_credentials_search_for_proof_req`
+
+        This test shows the flow in the rust code:
+        https://github.com/hyperledger/indy-sdk/blob/8157226e34ac06913fdfaa9bcee42c7573bff41a/libindy/tests/anoncreds.rs#L2482
+    
+    
+    job_application_proof_request_json = {
         'nonce': '1432422343242122312411212',
         'name': 'Job-Application',
         'version': '0.1',
@@ -245,7 +251,7 @@ async def run():
                 'restrictions': [{'cred_def_id': faber_transcript_cred_def_id}]
             }
         }
-    })
+    }
 
     logger.info("\"Acme\" -> Send \"Job-Application\" Proof Request to Alice")
 
@@ -331,6 +337,9 @@ async def run():
 
     authdecrypted_job_certificate_cred_offer = json.loads(job_certificate_cred_offer_json)
     logger.info("\"Alice\" -> Get \"Acme Job-Certificate\" Credential Definition from Ledger")
+
+    # await did.create_and_store_my_did(alice_wallet[0], "{}") # did for cred
+
     (_, acme_job_certificate_cred_def) = \
         await get_cred_def(pool_handle, alice_acme_did, authdecrypted_job_certificate_cred_offer['cred_def_id'])
 
@@ -447,7 +456,7 @@ async def run():
 
     schemas_json, cred_defs_json, revoc_defs_json, revoc_regs_json = \
         await verifier_get_entities_from_ledger(pool_handle, thrift_did,
-                                                authdecrypted_alice_apply_loan_proof['identifiers'], 'Thrift')
+                                                authdecrypted_alice_apply_loan_proof['identifiers'1], 'Thrift')
 
     logger.info("\"Thrift\" -> Verify \"Loan-Application-Basic\" Proof from Alice")
     assert 'Permanent' == \
@@ -543,11 +552,34 @@ async def run():
     event_send(agency,"agency","DELETE",{"name":"faber"  })
     event_send(agency,"agency","DELETE",{"name":"acme"   })
     event_send(agency,"agency","DELETE",{"name":"thrift" })
+    event_send(agency,"agency","DELETE",{"name":"alice"  })
 
     logger.info("Getting started -> done")
 
+def subscription(rx,tx,Rx_role,Tx_role): #onboard
+    rxWellknown = sky_cloud_API(rx,"io.picolabs.subscription","wellKnown_Rx",{})["id"]# get wellknown did.
+    event_send(tx,"agent","connect" ,{"destination_did":rxWellknown ,"Rx_role":Rx_role, "Tx_role":Tx_role }) # create subscription to gov
+    return sky_cloud_API(rx,"io.picolabs.subscription","mostRecentSubscription",{})
+
+def get_verinym(anchorer,anchoree,nym_role,alias,signing_did,subscription_id):
+    #signing_did = sky_cloud_API(anchorer,"G2S.agent","dids",{"metadata": "steward_did" })[0]["did"]# get signing did
+    didVerkey = event_send(anchoree,"agent","create_did",{"meta_data":nym_role})[0]["options"]["didVerkey"] # create did to be anchored
+    nymRequestId = event_send(anchoree,"agent","send_nym_request",{"anchoring_did":didVerkey[0],
+                                                                   "anchoring_did_verkey":didVerkey[1],
+                                                                   "alias":alias,
+                                                                   "role":nym_role,
+                                                                   "sid":subscription_id} )[0]["options"]["id"] # anchoree request nym from anchorer (send did to gov)
+    event_send(anchorer,"agent","accept_nym_request",{"nym_request_id": nymRequestId, "signing_did":signing_did}) # anchorer accept anchoree nym request (anchorer nym transaction with signing_did)
+    return didVerkey
 def event_send(eci,domain,type,attrs):
-    return requests.post(_host+"/sky/event/"+eci+"/none/"+domain+"/"+type,params=attrs)
+    result = requests.post(_host+"/sky/event/"+eci+"/none/"+domain+"/"+type,params=attrs).json()
+    if "directives" in result:
+        return result["directives"]
+    return result
+
+def sky_cloud_API(eci,rid,function,attrs):
+    return requests.post(_host+"/sky/cloud/"+eci+"/"+rid+"/"+function,params=attrs).json()
+
 if __name__ == '__main__':
     loop = asyncio.get_event_loop()
     loop.run_until_complete(run())

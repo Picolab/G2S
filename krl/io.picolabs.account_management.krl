@@ -28,9 +28,9 @@ ruleset io.picolabs.account_management {
     //rids required for an owner pico
     //  which depends on authentication method
     base_rids = {
-      "password":["io.picolabs.owner_authentication","G2S.agent","G2S.indy_sdk.ledger"
-                                                                ,"G2S.indy_sdk.pool"
-                                                                ,"G2S.indy_sdk.wallet"]
+      "password":["io.picolabs.owner_authentication","G2S.indy_sdk.pool",
+                                                    ,"G2S.indy_sdk.ledger"
+                                                    ,"G2S.indy_sdk.wallet","G2S.agent"]
       ,"did":    ["io.picolabs.did_auth_only"]
     }
 
