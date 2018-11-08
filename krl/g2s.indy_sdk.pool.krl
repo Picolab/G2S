@@ -1,7 +1,7 @@
 ruleset G2S.indy_sdk.pool {
   meta {
-    shares __testing, list, handle,create
-    provides list, handle, create
+    shares __testing, list, handle,create , open
+    provides list, handle, create , open
   }
   global {
     __testing = { "queries":
@@ -23,6 +23,10 @@ ruleset G2S.indy_sdk.pool {
     }
     create= defaction(){
       noop()
+    }
+    open = defaction(name){
+      pool:openPool(name) setting(poolHandle)
+      returns poolHandle
     }
   }
   rule create {

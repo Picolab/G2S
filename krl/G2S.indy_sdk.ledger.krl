@@ -35,10 +35,10 @@ ruleset G2S.indy_sdk.ledger {
                                anchoring_did_verkey,
                                alias,
                                role).klog("nymrequest")
-      response = ledger:signAndSubmitRequest(pool_handle.klog("wallet handle"),
+      response = ledger:signAndSubmitRequest(pool_handle,
                                     wallet_handle,
                                     signing_did,
-                                    request).klog("send nym request")                         
+                                    request).klog("ledger submit nym transaction")                         
       send_directive("nym transaction");
       returns response
     }
@@ -87,8 +87,16 @@ ruleset G2S.indy_sdk.ledger {
       anoncred:proverStoreCredential(wh, credId, credReqMetadata, cred, credDef, revRegDef)setting(results)
       returns results
     }
-    searchCredWithReq = function(wh,query){
-      anoncred:proverSearchCredentials(wh,query)
+    searchCredWithReq = function(wh,query){// TODO: support revocation and more querys 
+      search_for_proof_request_handle = anoncred:proverSearchCredentials(wh,query,count);
+      result = query{"requested_attributes"}.map(function(value,key){
+        anoncred:proverFetchCredentialsForProofReq ( search_for_proof_request_handle, key , count )[0]{"cred_info"}});
+      _result = result.put(query{"requested_predicates"}.map(function(value,key){
+        anoncred:proverFetchCredentialsForProofReq ( search_for_proof_request_handle, key , count )[0]{"cred_info"}}));
+      anoncred:proverCloseCredentialsSearchForProofReq ( search_for_proof_request_handle );                                                                    
+      __result = _result.map(function(value,key){ {}.put(value{"referent"},value)  }).values().reduce(function(a,b){a.put(b)});
+      //anoncrd:proverGetCredentials( wh, __result.klog("searchCredwithReq") )
+      __result.klog("searchCredwithReq")
     }
   }
   rule nym {

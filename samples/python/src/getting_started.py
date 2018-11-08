@@ -11,12 +11,14 @@ import random
 import ctypes
 import asyncio
 
+debug = False
+
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
 _host = "http://172.31.182.113:8080"
 # dids
-agency = "PFR1KHahcYRtoJJGSAQYBJ"
+agency = "H3tPX7koz1KkWnNJxY5PRw"
 gov   = ""
 faber = ""
 acme  = ""
@@ -33,14 +35,16 @@ async def run():
     thrift= event_send(agency,"agency","CREATE",{"name":"thrift" })[0]["options"]["pico"]["eci"]
     alice = event_send(agency,"agency","CREATE",{"name":"alice"  })[0]["options"]["pico"]["eci"]
 
-    #input("Agents have been created, feel free to check, Press Enter to continue...")
+    if debug :
+        input("Agents have been created, feel free to check, Press Enter to continue...")
 
     logger.info("\ngov:{} \n faber:{} \n acme:{} \n thrift:{}\n alice:{}\n".format(gov,faber,acme,thrift,alice))
     
     logger.info("\"Sovrin Steward\" -> Create and store in Wallet DID from seed")
 
     steward_did = event_send(gov,"agent","create_did",{"seed":"000000000000000000000000Steward1","meta_data":"steward_did"})[0]["options"]["didVerkey"][0]# this generates the same keys used in the genisis file 
-    #input("Steward did generated, Press Enter to continue...")
+    if debug :
+        input("Steward did generated, Press Enter to continue...")
     
     logger.info("==============================")
     logger.info("=== Subscriptions for Verinym ==")
@@ -72,7 +76,6 @@ async def run():
     
     # must use steward did, 'TRUST_ANCHOR cannot add TRUST_ANCHOR'
     faberDidVerkey = get_verinym(gov,faber,"TRUST_ANCHOR","Faber",steward_did,faberGovSid)
-    #input("Press Enter to continue...")
 
     logger.info("==============================")
     logger.info("== Creating Acme Verinym  ==")
@@ -85,13 +88,15 @@ async def run():
     logger.info("------------------------------")
 
     thriftDidVerkey = get_verinym(gov,thrift,"TRUST_ANCHOR","Faber",steward_did,thriftGovSid)
+    if debug :
+        input("Verinyms created, Press Enter to continue...")
 
     logger.info("==============================")
     logger.info("=== Credential definitions ==")
     logger.info("------------------------------")
 
     logger.info("\"Government\" -> Create \"Job-Certificate\" Schema")
-    
+    87
     JobCertificateSchemaId = event_send(gov,"agent","create_schema",{"issuer_did":govDidVerkey[0],
                    "name":"Job-Certificate",
                    "version":"0.2",
@@ -102,6 +107,9 @@ async def run():
                    "name":"Transcript",
                    "version":"1.2",
                    "attrNames":["first_name", "last_name", "degree", "status","year","average","ssn"]})[0]["options"]["result"]["txnMetadata"]["txnId"]
+    
+    if debug :         
+        input("schemas created, Press Enter to continue...")
 
     logger.info("==============================")
     logger.info("=== Faber Credential Definition ==")
@@ -115,7 +123,8 @@ async def run():
                     "tag":"TAG1" } 
                     ) [0]["options"]["result"]["txnMetadata"]["txnId"]
     logger.info(transcriptCredDefId)
-    input("-- faber created cred_def --Press Enter to continue...")
+    if debug :         
+        input("-- Faber created Transcript cred_def -- Press Enter to continue...")
 
     logger.info("==============================")
     logger.info("=== Acme Credential Definition ==")
@@ -128,6 +137,8 @@ async def run():
                     "issueing_did":acmDidVerkey[0],
                     "tag":"TAG1" } 
                     ) [0]["options"]["result"]["txnMetadata"]["txnId"]
+    if debug :         
+        input("-- Acme created Job Certificate cred_def -- Press Enter to continue...")
 
     logger.info("==============================")
     logger.info("=== Getting Transcript with Faber ==")
@@ -138,19 +149,24 @@ async def run():
     aliceFaberSid = subscription(faber, alice ,"Alice" ,"Faber")
 
     aliceDidVerkey = event_send(gov,"agent","create_did",{"meta_data":"faber_cred"})[0]["options"]["didVerkey"] # did for get_cred_def_request
+    if debug :         
+        input("-- Alice Faber subscription created -- Press Enter to continue...")
 
     logger.info("==============================")
     logger.info("== Getting Transcript with Faber - Getting Transcript Credential ==")
     logger.info("------------------------------")
 
     logger.info("\"Faber\" -> Create and Send\"Transcript\" Credential Offer for Alice")
-    #offer = sky_cloud_API(rx,"G2S.agent","credentialOffer",{"cred_def_id":jobCertificateCredDefId})
+    #offer = sky_cloud_API(rx,"G2S.agent","credentialOffer",{"cred_def_id":transcriptCredDefId}) # done in the next step.
 
-    offerId = event_send(faber,"agent","send_credential_offer",{"sid":aliceFaberSid})[0]["options"]["id"]
+    offerId = event_send(faber,"agent","send_credential_offer",{"sid":aliceFaberSid,"cred_def_id":transcriptCredDefId})[0]["options"]["id"]
 
     logger.info("\"Alice\" -> Get \"Faber Transcript\" Credential Definition from Ledger")
     logger.info("\"Alice\" -> Create \"Transcript\" Credential Request for Faber")
     logger.info("\"Alice\" -> Send   \"Transcript\" Credential Request to Faber")
+
+    if debug :         
+        input("-- Alice recieved fabers offer -- Press Enter to continue...")
 
     requestId = event_send(alice,"agent","accept_credential_offer_with_request",{   "sid"         :aliceFaberSid, 
                                                                                     "offerId"     :offerId,
@@ -158,12 +174,17 @@ async def run():
                                                                                     "credDefId"   :transcriptCredDefId,
                                                                                     "proverDid"   :aliceDidVerkey[0],
                                                                                         })[0]["options"]["id"]
+    if debug :         
+        input("-- Alice accepts fabers offer -- Press Enter to continue...")
 
 
     logger.info("\"Faber\" -> Create \"Transcript\" Credential for Alice")
     event_send(faber,"agent","issue_credential_from_request",{  "sid"        : aliceFaberSid,
+                                                                "offerId"    : offerId,
                                                                 "requestId"  : requestId ,
-                                                                "credAttributes": {
+                                                                #"revRegId"   : ,
+                                                                #"blobStorageReaderHandle": ,
+                                                                "credAttributes":  json.dumps({
                                                                                     "first_name": "Alice",
                                                                                     "last_name": "Garcia",
                                                                                     "degree": "Bachelor of Science, Marketing",
@@ -171,25 +192,12 @@ async def run():
                                                                                     "ssn": "123-45-6789",
                                                                                     "year": "2015",
                                                                                     "average": "5"
-                                                                                } })
-    
-    #transcript_cred_values = {
-    #    "first_name": {"raw": "Alice", "encoded": "1139481716457488690172217916278103335"},
-    #    "last_name": {"raw": "Garcia", "encoded": "5321642780241790123587902456789123452"},
-    #    "degree": {"raw": "Bachelor of Science, Marketing", "encoded": "12434523576212321"},
-    #    "status": {"raw": "graduated", "encoded": "2213454313412354"},
-    #    "ssn": {"raw": "123-45-6789", "encoded": "3124141231422543541"},
-    #    "year": {"raw": "2015", "encoded": "2015"},
-    #    "average": {"raw": "5", "encoded": "5"}
-    #}
-    
-    # await anoncreds.issuer_create_credential(faber_wallet[0], transcript_cred_offer_json, transcript_cred_request_json, transcript_cred_values, None, None)
+                                                                                }) })
+    #if debug :         
+    input("-- Fabers issues credential to alice -- Press Enter to continue...")
 
     logger.info("\"Faber\" -> Send \"Transcript\" Credential to Alice")
-
     logger.info("\"Alice\" -> Store \"Transcript\" Credential from Faber")
-
-    # await anoncreds.prover_store_credential(alice_wallet[0], None, transcript_cred_request_metadata_json, transcript_cred_json, faber_transcript_cred_def, None)
 
     logger.info("==============================")
     logger.info("=== Apply for the job with Acme ==")
@@ -204,6 +212,48 @@ async def run():
     logger.info("------------------------------")
 
     logger.info("\"Acme\" -> Create \"Job-Application\" Proof Request")
+
+    proofRequestId = event_send(acme,"agent","send_proof_request",{ "sid" : aliceAcmeSid,
+                                                                    "nonce": "1432422343242122312411212",# 25 digits
+                                                                    "name": "Job-Application",
+                                                                    "version": "0.1",
+                                                                    "requested_attributes": {
+                                                                        "attr1_referent": {
+                                                                            "name": "first_name"
+                                                                        },
+                                                                        "attr2_referent": {
+                                                                            "name": "last_name"
+                                                                        },
+                                                                        "attr3_referent": {
+                                                                            "name": "degree",
+                                                                            "restrictions": [{"cred_def_id": transcriptCredDefId}]
+                                                                        },
+                                                                        "attr4_referent": {
+                                                                            "name": "status",
+                                                                            "restrictions": [{"cred_def_id": transcriptCredDefId}]
+                                                                        },
+                                                                        "attr5_referent": {
+                                                                            "name": "ssn",
+                                                                            "restrictions": [{"cred_def_id": transcriptCredDefId}]
+                                                                        },
+                                                                        "attr6_referent": {
+                                                                            "name": "phone_number"
+                                                                        }
+                                                                    },
+                                                                    "requested_predicates": {
+                                                                        "predicate1_referent": {
+                                                                            "name": "average",
+                                                                            "p_type": ">=",
+                                                                            "p_value": 4,
+                                                                            "restrictions": [{"cred_def_id": transcriptCredDefId}]
+                                                                        }
+                                                                    } })#[0]["options"]["id"]
+    
+    logger.info("\"Acme\" -> Send \"Job-Application\" Proof Request to Alice")
+    logger.info("\"Alice\" -> Get credentials for \"Job-Application\" Proof Request")
+
+    offerId = event_send(alice,"agent","send_proof_for_request",{"sid":aliceAcmeSid,"proof_request_id":proofRequestId})#[0]["options"]["id"]
+    
     '''
     The flow is now (python):
         -`prover_search_credentials_for_proof_req` which returns a search handle (passing the proof req. json).
@@ -214,49 +264,9 @@ async def run():
 
         This test shows the flow in the rust code:
         https://github.com/hyperledger/indy-sdk/blob/8157226e34ac06913fdfaa9bcee42c7573bff41a/libindy/tests/anoncreds.rs#L2482
-    
-    
-    job_application_proof_request_json = {
-        'nonce': '1432422343242122312411212',
-        'name': 'Job-Application',
-        'version': '0.1',
-        'requested_attributes': {
-            'attr1_referent': {
-                'name': 'first_name'
-            },
-            'attr2_referent': {
-                'name': 'last_name'
-            },
-            'attr3_referent': {
-                'name': 'degree',
-                'restrictions': [{'cred_def_id': faber_transcript_cred_def_id}]
-            },
-            'attr4_referent': {
-                'name': 'status',
-                'restrictions': [{'cred_def_id': faber_transcript_cred_def_id}]
-            },
-            'attr5_referent': {
-                'name': 'ssn',
-                'restrictions': [{'cred_def_id': faber_transcript_cred_def_id}]
-            },
-            'attr6_referent': {
-                'name': 'phone_number'
-            }
-        },
-        'requested_predicates': {
-            'predicate1_referent': {
-                'name': 'average',
-                'p_type': '>=',
-                'p_value': 4,
-                'restrictions': [{'cred_def_id': faber_transcript_cred_def_id}]
-            }
-        }
-    }
+    '''
 
-    logger.info("\"Acme\" -> Send \"Job-Application\" Proof Request to Alice")
-
-    logger.info("\"Alice\" -> Get credentials for \"Job-Application\" Proof Request")
-
+    '''
     search_for_job_application_proof_request = \
         await anoncreds.prover_search_credentials_for_proof_req(alice_wallet[0],
                                                                 job_application_proof_request_json, None)
@@ -324,53 +334,43 @@ async def run():
     assert await anoncreds.verifier_verify_proof(job_application_proof_request_json,
                                                  job_application_proof_json,
                                                  schemas_json, cred_defs_json, revoc_ref_defs_json, revoc_regs_json)
-
+    '''
     logger.info("==============================")
     logger.info("== Apply for the job with Acme - Getting Job-Certificate Credential ==")
     logger.info("------------------------------")
-
+    
     logger.info("\"Acme\" -> Create \"Job-Certificate\" Credential Offer for Alice")
-    job_certificate_cred_offer_json = \
-        await anoncreds.issuer_create_credential_offer(acme_wallet[0], acme_job_certificate_cred_def_id)
+
+    offerId = event_send(acme,"agent","send_credential_offer",{"sid":aliceAcmeSid,"cred_def_id":jobCertificateCredDefId})[0]["options"]["id"]
 
     logger.info("\"Acme\" -> Send \"Job-Certificate\" Credential Offer to Alice")
-
-    authdecrypted_job_certificate_cred_offer = json.loads(job_certificate_cred_offer_json)
     logger.info("\"Alice\" -> Get \"Acme Job-Certificate\" Credential Definition from Ledger")
-
-    # await did.create_and_store_my_did(alice_wallet[0], "{}") # did for cred
-
-    (_, acme_job_certificate_cred_def) = \
-        await get_cred_def(pool_handle, alice_acme_did, authdecrypted_job_certificate_cred_offer['cred_def_id'])
-
     logger.info("\"Alice\" -> Create and store in Wallet \"Job-Certificate\" Credential Request for Acme")
-    (job_certificate_cred_request_json, job_certificate_cred_request_metadata_json) = \
-        await anoncreds.prover_create_credential_req(alice_wallet[0], alice_acme_did,
-                                                     job_certificate_cred_offer_json,
-                                                     acme_job_certificate_cred_def, alice_master_secret_id)
-
     logger.info("\"Alice\" -> Send \"Job-Certificate\" Credential Request to Acme")
 
+    requestId = event_send(alice,"agent","accept_credential_offer_with_request",{   "sid"         :aliceAcmeSid, 
+                                                                                    "offerId"     :offerId,
+                                                                                    "submitterDid":acmDidVerkey[0],
+                                                                                    "credDefId"   :jobCertificateCredDefId,
+                                                                                    "proverDid"   :aliceDidVerkey[0],
+                                                                                        })[0]["options"]["id"]
+
     logger.info("\"Acme\" -> Create \"Job-Certificate\" Credential for Alice")
-    alice_job_certificate_cred_values_json = json.dumps({
-        "first_name": {"raw": "Alice", "encoded": "245712572474217942457235975012103335"},
-        "last_name": {"raw": "Garcia", "encoded": "312643218496194691632153761283356127"},
-        "employee_status": {"raw": "Permanent", "encoded": "2143135425425143112321314321"},
-        "salary": {"raw": "2400", "encoded": "2400"},
-        "experience": {"raw": "10", "encoded": "10"}
-    })
-
-    job_certificate_cred_json, _, _ = \
-        await anoncreds.issuer_create_credential(acme_wallet[0], job_certificate_cred_offer_json,
-                                                 job_certificate_cred_request_json,
-                                                 alice_job_certificate_cred_values_json, None, None)
-
     logger.info("\"Acme\" -> Send \"Job-Certificate\" Credential to Alice")
-
     logger.info("\"Alice\" -> Store \"Job-Certificate\" Credential")
-    await anoncreds.prover_store_credential(alice_wallet[0], None, job_certificate_cred_request_metadata_json,
-                                            job_certificate_cred_json,
-                                            acme_job_certificate_cred_def_json, None)
+
+    event_send(faber,"agent","issue_credential_from_request",{  "sid"        : aliceAcmeSid,
+                                                                "offerId"    : offerId,
+                                                                "requestId"  : requestId ,
+                                                                #"revRegId"   : ,
+                                                                #"blobStorageReaderHandle": ,
+                                                                "credAttributes":  json.dumps({
+                                                                                    "first_name": "Alice",
+                                                                                    "last_name": "Garcia",
+                                                                                    "employee_status": "Permanent",
+                                                                                    "salary": "2400",
+                                                                                    "experience": "10"
+                                                                                }) })
 
     logger.info("==============================")
     logger.info("=== Apply for the loan with Thrift ==")
@@ -378,14 +378,14 @@ async def run():
     logger.info("== Apply for the loan with Thrift - Onboarding ==")
     logger.info("------------------------------")
     
-    ( alice_thrift_did, _ ) = await did.create_and_store_my_did(alice_wallet[0], "{}")
+    #( alice_thrift_did, _ ) = await did.create_and_store_my_did(alice_wallet[0], "{}")
 
     logger.info("==============================")
     logger.info("== Apply for the loan with Thrift - Job-Certificate proving  ==")
     logger.info("------------------------------")
 
     logger.info("\"Thrift\" -> Create \"Loan-Application-Basic\" Proof Request")
-    apply_loan_proof_request_json = json.dumps({
+    '''apply_loan_proof_request_json = json.dumps({
         'nonce': '123432421212',
         'name': 'Loan-Application-Basic',
         'version': '0.1',
@@ -465,7 +465,7 @@ async def run():
     assert await anoncreds.verifier_verify_proof(apply_loan_proof_request_json,
                                                  alice_apply_loan_proof_json,
                                                  schemas_json, cred_defs_json, revoc_defs_json, revoc_regs_json)
-
+    
     logger.info("==============================")
 
     logger.info("==============================")

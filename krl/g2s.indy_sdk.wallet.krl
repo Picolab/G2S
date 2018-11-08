@@ -58,7 +58,9 @@ ruleset G2S.indy_sdk.wallet {
     //deleteDid = defaction(){
       //noop()
     //}
-    
+    //proof = funtion(wallet_handle, request, extra_query){
+    //  anoncreds.prover_search_credentials_for_proof_req(wallet_handle,request, extra_query)
+    //} 
     openWalletFun = function(id,key){
       wallet:openWalletFunction({"id" : id},{"key":key} )
     }

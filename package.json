@@ -12,7 +12,8 @@
   },
   "dependencies": {
     "indy-sdk": "latest",
-    "pico-engine": "latest"
+    "pico-engine": "^0.48.0",
+    "sovrin-did": "^1.4.0"
   },
   "pico-engine": {
     "port": 8080,

@@ -1,6 +1,8 @@
 ruleset G2S.agency {
   meta {
     shares __testing
+    use module G2S.indy_sdk.pool   alias pool_module
+
   }
   global {
     __testing = { "queries":
@@ -20,6 +22,10 @@ ruleset G2S.agency {
   rule constructor {
     select when wrangler ruleset_added where event:attr("rids") >< meta:rid
     
+  }
+  rule systemOnLine { // connect to pool when the engine starts
+    select when system online
+    pool_module:open("rLJJ41TslS")
   }
   rule handleMsg {
     select when agency msg_handler
