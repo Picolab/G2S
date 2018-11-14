@@ -60,7 +60,9 @@ ruleset G2S.agent {
             "cred_requests"       :ent:cred_requests ,
             "sent_cred"           :ent:sent_cred ,
             "creds"               :ent:creds ,
-            "sent_proof_requests" :ent:sent_proof_requests
+            "sent_proof_requests" :ent:sent_proof_requests,
+            "proof_requests"      :ent:proof_requests,
+            "proof_offer"         :ent:proof_offer
         
       }
     }
@@ -223,9 +225,14 @@ ruleset G2S.agent {
       closeWalletFun(handle);
       results
     }
-    searchForCredentialRequest = function(query){
+    searchForCredentialRequest = function(query,proofReq, attr_count,pred_count,//TODO: split up for user input and refactor code to be in krl.....
+                                          schemaSubmitterDid, schemaId , credDefSubmitterDid, credDefId){
       handle = openWalletFun();
-      results = ledger_module:searchCredWithReq(handle,query);
+      schemasCred_defsRevoc_statesCreds_for_proof = ledger_module:searchCredWithReqForProof(pool_module:handle(),handle,query,attr_count,pred_count,schemaSubmitterDid, schemaId , credDefSubmitterDid, credDefId);
+      results = wallet_module:proverCreateProof(handle, proofReq, schemasCred_defsRevoc_statesCreds_for_proof[3] , ent:secret_id
+                                                                , schemasCred_defsRevoc_statesCreds_for_proof[0]
+                                                                , schemasCred_defsRevoc_statesCreds_for_proof[1]
+                                                                , schemasCred_defsRevoc_statesCreds_for_proof[2] );
       closeWalletFun(handle);
       results
     }
@@ -281,6 +288,7 @@ ruleset G2S.agent {
       ent:sent_proof_requests:= {};
       ent:proof_requests := {};
       ent:sent_proofs := {};
+      ent:proof_offer := {};
       raise wrangler event "autoAcceptConfigUpdate"
         attributes {"variable"    : "Tx_Rx_Type",
                     "regex_str"   : "Indy" };
@@ -470,14 +478,14 @@ ruleset G2S.agent {
     select when agent send_proof_request
     pre{
         id = random:uuid();
-        tx = subscription:established("Id",event:attr("sid"))[0]{"Tx"};
+        tx = subscription:established("Id",event:attr("sid"))[0]{"Tx"}.klog("tx in send proof request");
         proof_request = {"id":id, "request":{
         "nonce" : event:attr("nonce").defaultsTo(random:integer(upper = 1000000000000000000000000, 
                                                                 lower = 9999999999999999999999999)),
         "name" : event:attr("name"),
         "version" : event:attr("version"),
-        "requested_attributes" : event:attr("requested_attributes"),
-        "requested_predicates" : event:attr("requested_predicates")
+        "requested_attributes" : event:attr("requested_attributes").decode(),
+        "requested_predicates" : event:attr("requested_predicates").decode()
         }};// TODO add revocation support...
     }if(tx)then every{
       event:send({
@@ -504,9 +512,11 @@ ruleset G2S.agent {
     select when agent send_proof_for_request
     pre{
       id = random:uuid();
-      request = ent:proof_requests{event:attr(proofRequestId)};
+      request = ent:proof_requests{event:attr("proofRequestId")}.klog("proof request");
       tx = subscription:established("Id",event:attr("sid"))[0]{"Tx"};
-      proof = {"id":id,"proof":searchForCredentialRequest(request)}.klog("proof")
+      proof = {"id":id,"proof":searchForCredentialRequest(query,request, event:attr("attrCount").defaultsTo(10),
+                                                          event:attr("predCount").defaultsTo(10),event:attr("schemaSubmitterDid"), 
+                                                          event:attr("schemaId") , event:attr("credDefSubmitterDid"), event:attr("credDefId"))}.klog("proof")
     }if(tx)then every{
       event:send({
           "eci": tx,
@@ -519,6 +529,7 @@ ruleset G2S.agent {
       ent:sent_proofs := ent:sent_proofs.put(id,proof{"proof"})
     }
   }
+  
   rule storeProofOffer {
     select when agent proof_offer
     pre{

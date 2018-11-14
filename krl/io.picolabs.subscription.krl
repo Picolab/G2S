@@ -93,7 +93,7 @@ ent:established [
     inbound = function(key,value){//Rx_Pending
       filterOn(ent:inbound, key, value)
     }
-    mostRecentSubscription = function(){
+    mostRecentSubscription = function(){// TODO: change this to use a time stamp or a nounce used at subscription creation
       ent:mostRecentSubscription
     }
 

@@ -1,9 +1,11 @@
 ruleset G2S.indy_sdk.ledger {
   meta {
     shares __testing, getNym,anchorSchema,blocks,getSchema,anchorCredDef,
-      credDefs,createLinkedSecret,issuerCreateCredentialOffer,proverCreateCredentialReq,nym,createCred,storeCred,searchCredWithReq
+      credDefs,createLinkedSecret,issuerCreateCredentialOffer,
+      proverCreateCredentialReq,nym,createCred,storeCred,searchCredWithReq,searchCredWithReqForProof
     provides getNym,anchorSchema,blocks,getSchema,anchorCredDef,
-      credDefs,createLinkedSecret,issuerCreateCredentialOffer,proverCreateCredentialReq,nym,createCred,storeCred,searchCredWithReq
+      credDefs,createLinkedSecret,issuerCreateCredentialOffer,
+      proverCreateCredentialReq,nym,createCred,storeCred,searchCredWithReq,searchCredWithReqForProof
   }
   global {
     __testing = { "queries":
@@ -87,7 +89,11 @@ ruleset G2S.indy_sdk.ledger {
       anoncred:proverStoreCredential(wh, credId, credReqMetadata, cred, credDef, revRegDef)setting(results)
       returns results
     }
-    searchCredWithReq = function(wh,query){// TODO: support revocation and more querys 
+    searchCredWithReqForProof = function(poolHandle,wh, query, attr_count,pred_count, schemaSubmitterDid, schemaId , credDefSubmitterDid, credDefId ){
+      identifiers_credsForProof = anoncred:proverSearchCredsForProof(wh, query, attr_count,pred_count);
+      anoncred:proverGetEntitiesFromLedger(identifiers_credsForProof[0],poolHandle,schemaSubmitterDid,schemaId,credDefSubmitterDid,credDefId).append(identifiers_credsForProof[1]);
+    }
+    /*searchCredWithReq = function(wh,query){// TODO: support revocation and more querys 
       search_for_proof_request_handle = anoncred:proverSearchCredentials(wh,query,count);
       result = query{"requested_attributes"}.map(function(value,key){
         anoncred:proverFetchCredentialsForProofReq ( search_for_proof_request_handle, key , count )[0]{"cred_info"}});
@@ -97,6 +103,9 @@ ruleset G2S.indy_sdk.ledger {
       __result = _result.map(function(value,key){ {}.put(value{"referent"},value)  }).values().reduce(function(a,b){a.put(b)});
       //anoncrd:proverGetCredentials( wh, __result.klog("searchCredwithReq") )
       __result.klog("searchCredwithReq")
+    }*/
+    proverCreateProof = function(wh, proofReq, requestedCredentials, masterSecretName, schemas, credentialDefs, revStates){
+      anoncred:proverCreateProof(wh, proofReq, requestedCredentials, masterSecretName, schemas, credentialDefs, revStates)
     }
   }
   rule nym {

@@ -12,7 +12,7 @@
   },
   "dependencies": {
     "indy-sdk": "latest",
-    "pico-engine": "^0.48.0",
+    "pico-engine": "^0.48.1",
     "sovrin-did": "^1.4.0"
   },
   "pico-engine": {

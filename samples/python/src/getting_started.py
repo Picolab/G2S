@@ -194,7 +194,7 @@ async def run():
                                                                                     "average": "5"
                                                                                 }) })
     #if debug :         
-    input("-- Fabers issues credential to alice -- Press Enter to continue...")
+    #input("-- Fabers issues credential to alice -- Press Enter to continue...")
 
     logger.info("\"Faber\" -> Send \"Transcript\" Credential to Alice")
     logger.info("\"Alice\" -> Store \"Transcript\" Credential from Faber")
@@ -206,6 +206,7 @@ async def run():
     logger.info("------------------------------")
 
     aliceAcmeSid = subscription(acme, alice ,"Alice" ,"Acme")
+    input("-- -- Press Enter to continue...")
 
     logger.info("==============================")
     logger.info("== Apply for the job with Acme - Transcript proving ==")
@@ -217,7 +218,7 @@ async def run():
                                                                     "nonce": "1432422343242122312411212",# 25 digits
                                                                     "name": "Job-Application",
                                                                     "version": "0.1",
-                                                                    "requested_attributes": {
+                                                                    "requested_attributes": json.dumps({
                                                                         "attr1_referent": {
                                                                             "name": "first_name"
                                                                         },
@@ -239,20 +240,29 @@ async def run():
                                                                         "attr6_referent": {
                                                                             "name": "phone_number"
                                                                         }
-                                                                    },
-                                                                    "requested_predicates": {
+                                                                    }),
+                                                                    "requested_predicates":  json.dumps({
                                                                         "predicate1_referent": {
                                                                             "name": "average",
                                                                             "p_type": ">=",
                                                                             "p_value": 4,
                                                                             "restrictions": [{"cred_def_id": transcriptCredDefId}]
                                                                         }
-                                                                    } })#[0]["options"]["id"]
+                                                                    }) })[0]["options"]["id"]
+    input("--  -- Press Enter to continue...")
     
     logger.info("\"Acme\" -> Send \"Job-Application\" Proof Request to Alice")
     logger.info("\"Alice\" -> Get credentials for \"Job-Application\" Proof Request")
-
-    offerId = event_send(alice,"agent","send_proof_for_request",{"sid":aliceAcmeSid,"proof_request_id":proofRequestId})#[0]["options"]["id"]
+    logger.info(proofRequestId)
+    offerId = event_send(alice,"agent","send_proof_for_request",{"sid":aliceAcmeSid,"proofRequestId":proofRequestId,
+                                                                 "attrCount":3,
+                                                                 "predCount":3,
+                                                                 "schemaSubmitterDid":govDidVerkey[0],
+                                                                 "schemaId":TranscriptSchemaId,
+                                                                 "credDefSubmitterDid":govDidVerkey[0],
+                                                                 "credDefId":transcriptCredDefId
+                                                                 })#[0]["options"]["id"]
+    input("-- proof for request -- Press Enter to continue...")
     
     '''
     The flow is now (python):
@@ -265,54 +275,9 @@ async def run():
         This test shows the flow in the rust code:
         https://github.com/hyperledger/indy-sdk/blob/8157226e34ac06913fdfaa9bcee42c7573bff41a/libindy/tests/anoncreds.rs#L2482
     '''
-
-    '''
-    search_for_job_application_proof_request = \
-        await anoncreds.prover_search_credentials_for_proof_req(alice_wallet[0],
-                                                                job_application_proof_request_json, None)
-
-    cred_for_attr1 = await get_credential_for_referent(search_for_job_application_proof_request, 'attr1_referent')
-    cred_for_attr2 = await get_credential_for_referent(search_for_job_application_proof_request, 'attr2_referent')
-    cred_for_attr3 = await get_credential_for_referent(search_for_job_application_proof_request, 'attr3_referent')
-    cred_for_attr4 = await get_credential_for_referent(search_for_job_application_proof_request, 'attr4_referent')
-    cred_for_attr5 = await get_credential_for_referent(search_for_job_application_proof_request, 'attr5_referent')
-    cred_for_predicate1 = \
-        await get_credential_for_referent(search_for_job_application_proof_request, 'predicate1_referent')
-
-    await anoncreds.prover_close_credentials_search_for_proof_req(search_for_job_application_proof_request)
-
-    creds_for_job_application_proof = {cred_for_attr1['referent']: cred_for_attr1,
-                                       cred_for_attr2['referent']: cred_for_attr2,
-                                       cred_for_attr3['referent']: cred_for_attr3,
-                                       cred_for_attr4['referent']: cred_for_attr4,
-                                       cred_for_attr5['referent']: cred_for_attr5,
-                                       cred_for_predicate1['referent']: cred_for_predicate1}
-
-    schemas_json, cred_defs_json, revoc_states_json = \
-        await prover_get_entities_from_ledger(pool_handle, alice_faber_did, creds_for_job_application_proof, 'Alice')
-
-    logger.info("\"Alice\" -> Create \"Job-Application\" Proof")
-    job_application_requested_creds_json = json.dumps({
-        'self_attested_attributes': {
-            'attr1_referent': 'Alice',
-            'attr2_referent': 'Garcia',
-            'attr6_referent': '123-45-6789'
-        },
-        'requested_attributes': {
-            'attr3_referent': {'cred_id': cred_for_attr3['referent'], 'revealed': True},
-            'attr4_referent': {'cred_id': cred_for_attr4['referent'], 'revealed': True},
-            'attr5_referent': {'cred_id': cred_for_attr5['referent'], 'revealed': True},
-        },
-        'requested_predicates': {'predicate1_referent': {'cred_id': cred_for_predicate1['referent']}}
-    })
-
-    job_application_proof_json = \
-        await anoncreds.prover_create_proof(alice_wallet[0], job_application_proof_request_json,
-                                            job_application_requested_creds_json, alice_master_secret_id,
-                                            schemas_json, cred_defs_json, revoc_states_json)
-
     logger.info("\"Alice\" -> Send \"Job-Application\" Proof to Acme")
 
+    '''
     decrypted_job_application_proof = json.loads(job_application_proof_json)
 
     schemas_json, cred_defs_json, revoc_ref_defs_json, revoc_regs_json = \
@@ -320,16 +285,6 @@ async def run():
                                                 decrypted_job_application_proof['identifiers'], 'Acme')
 
     logger.info("\"Acme\" -> Verify \"Job-Application\" Proof from Alice")
-    assert 'Bachelor of Science, Marketing' == \
-           decrypted_job_application_proof['requested_proof']['revealed_attrs']['attr3_referent']['raw']
-    assert 'graduated' == \
-           decrypted_job_application_proof['requested_proof']['revealed_attrs']['attr4_referent']['raw']
-    assert '123-45-6789' == \
-           decrypted_job_application_proof['requested_proof']['revealed_attrs']['attr5_referent']['raw']
-
-    assert 'Alice' == decrypted_job_application_proof['requested_proof']['self_attested_attrs']['attr1_referent']
-    assert 'Garcia' == decrypted_job_application_proof['requested_proof']['self_attested_attrs']['attr2_referent']
-    assert '123-45-6789' == decrypted_job_application_proof['requested_proof']['self_attested_attrs']['attr6_referent']
 
     assert await anoncreds.verifier_verify_proof(job_application_proof_request_json,
                                                  job_application_proof_json,
@@ -378,6 +333,7 @@ async def run():
     logger.info("== Apply for the loan with Thrift - Onboarding ==")
     logger.info("------------------------------")
     
+    aliceThriftSid = subscription(thrift, alice ,"Alice" ,"Thrift")
     #( alice_thrift_did, _ ) = await did.create_and_store_my_did(alice_wallet[0], "{}")
 
     logger.info("==============================")
@@ -385,36 +341,36 @@ async def run():
     logger.info("------------------------------")
 
     logger.info("\"Thrift\" -> Create \"Loan-Application-Basic\" Proof Request")
-    '''apply_loan_proof_request_json = json.dumps({
-        'nonce': '123432421212',
-        'name': 'Loan-Application-Basic',
-        'version': '0.1',
-        'requested_attributes': {
-            'attr1_referent': {
-                'name': 'employee_status',
-                'restrictions': [{'cred_def_id': acme_job_certificate_cred_def_id}]
-            }
-        },
-        'requested_predicates': {
-            'predicate1_referent': {
-                'name': 'salary',
-                'p_type': '>=',
-                'p_value': 2000,
-                'restrictions': [{'cred_def_id': acme_job_certificate_cred_def_id}]
-            },
-            'predicate2_referent': {
-                'name': 'experience',
-                'p_type': '>=',
-                'p_value': 1,
-                'restrictions': [{'cred_def_id': acme_job_certificate_cred_def_id}]
-            }
-        }
-    })
+    proofRequestId = event_send(thrift,"agent","send_proof_request",{ "sid" : aliceThriftSid,
+                                                                    "nonce": "123432421212",
+                                                                    "name": "Loan-Application-Basic",
+                                                                    "version": "0.1",
+                                                                    "requested_attributes": json.dumps({
+                                                                        'attr1_referent': {
+                                                                            'name': 'employee_status',
+                                                                            'restrictions': [{'cred_def_id': jobCertificateCredDefId}]
+                                                                        }
+                                                                    ),
+                                                                    "requested_predicates":  json.dumps( {
+                                                                        'predicate1_referent': {
+                                                                            'name': 'salary',
+                                                                            'p_type': '>=',
+                                                                            'p_value': 2000,
+                                                                            'restrictions': [{'cred_def_id': jobCertificateCredDefId}]
+                                                                        },
+                                                                        'predicate2_referent': {
+                                                                            'name': 'experience',
+                                                                            'p_type': '>=',
+                                                                            'p_value': 1,
+                                                                            'restrictions': [{'cred_def_id': jobCertificateCredDefId}]
+                                                                    }) })[0]["options"]["id"]
+    #input("--  -- Press Enter to continue...")
 
     logger.info("\"Thrift\" -> Send \"Loan-Application-Basic\" Proof Request to Alice")
 
     logger.info("\"Alice\" -> Get credentials for \"Loan-Application-Basic\" Proof Request")
 
+    '''
     search_for_apply_loan_proof_request = \
         await anoncreds.prover_search_credentials_for_proof_req(alice_wallet[0],
                                                                 apply_loan_proof_request_json, None)
@@ -459,8 +415,6 @@ async def run():
                                                 authdecrypted_alice_apply_loan_proof['identifiers'1], 'Thrift')
 
     logger.info("\"Thrift\" -> Verify \"Loan-Application-Basic\" Proof from Alice")
-    assert 'Permanent' == \
-           authdecrypted_alice_apply_loan_proof['requested_proof']['revealed_attrs']['attr1_referent']['raw']
 
     assert await anoncreds.verifier_verify_proof(apply_loan_proof_request_json,
                                                  alice_apply_loan_proof_json,
@@ -534,12 +488,6 @@ async def run():
                                                 authdecrypted_alice_apply_loan_kyc_proof['identifiers'], 'Thrift')
 
     logger.info("\"Thrift\" -> Verify \"Loan-Application-KYC\" Proof from Alice")
-    assert 'Alice' == \
-           authdecrypted_alice_apply_loan_kyc_proof['requested_proof']['revealed_attrs']['attr1_referent']['raw']
-    assert 'Garcia' == \
-           authdecrypted_alice_apply_loan_kyc_proof['requested_proof']['revealed_attrs']['attr2_referent']['raw']
-    assert '123-45-6789' == \
-           authdecrypted_alice_apply_loan_kyc_proof['requested_proof']['revealed_attrs']['attr3_referent']['raw']
 
     assert await anoncreds.verifier_verify_proof(apply_loan_kyc_proof_request_json,
                                                  alice_apply_loan_kyc_proof_json,

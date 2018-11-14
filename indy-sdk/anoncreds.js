@@ -1,6 +1,8 @@
-var sdk = require('indy-sdk')
-sdk.setProtocolVersion(2);
+var sdk = require('indy-sdk');
+const util = require('util');
 
+sdk.setProtocolVersion(2);
+sdk.setDefaultLogger("trace");
 // code taken from http://www.danvk.org/hex2dec.html with Apache 2 license.
 /**
  * A function for converting hex <-> dec w/o loss of precision.
@@ -199,23 +201,74 @@ module.exports = {
             return await sdk.proverGetCredential(parseInt(args.wh, 10), args.credId );
         }
     },
-    handleProof:{
+    proverSearchCredsForProof:{
         type:'function',
-        args:[],
-        fn  :async function(){
-            let results= {};
-            search_for_job_proof_request = await sdk.proverSearchCredentials(parseInt(args.wh, 10), args.query );
-            for (let index = 0; index < args.disclosed_attributes.length; index++) {
-                credentials = await sdk.proverFetchCredentials(parseInt(args.sh,10), args.count )
-                results[credentials[0].cred_info.referent] = credentials[0].cred_info;
+        args:['wh','query'],
+        fn  :async function(args){
+            console.log(util.inspect(args, false, null, true /* enable colors */));
+            let creds_to_get_from_ledger= {};
+            let creds_for_proof = {};
+            search_handle = await sdk.proverSearchCredentialsForProofReq(parseInt(args.wh, 10), args.query ,null );
+            console.log("search handle",search_handle);
+            for (key in args.query.requested_attributes) {
+                console.log("key",key);
+                credentials = await sdk.proverFetchCredentialsForProofReq(search_handle, 'attr1_referent' ,10);
+                console.log(util.inspect(credentials, false, null, true /* enable colors */));
+                /*creds_to_get_from_ledger[credentials[0].cred_info.referent] = credentials[0].cred_info;// this just takes the first credential found, there should be user input for this part.
+                if (args.query.requested_attributes[key].hasOwnProperty("restrictions")){
+                    creds_for_proof.requested_attributes[key] = {'cred_id': credentials[0].cred_info.referent, 'revealed': True};// again user input should be used here.
+                }else{
+                    creds_for_proof.self_attested_attributes[key] = args.query.requested_attributes.key[name];
+                }*/
             }
-            for (let index = 0; index < args.disclosed_predicates.length; index++) {
-                credentials = await sdk.proverFetchCredentials(parseInt(args.sh,10), args.count )
-                results[credentials[0].cred_info.referent] = credentials[0].cred_info;
+            for (key in args.query.requested_predicates) {
+                credentials = await sdk.proverFetchCredentialsForProofReq(search_handle,key,10);
+                console.log(util.inspect(credentials, false, null, true /* enable colors */));
+                //creds_to_get_from_ledger[credentials[0].cred_info.referent] = credentials[0].cred_info;
+                //creds_for_proof.requested_predicates[key]={'cred_id': credentials[0].cred_info.referent};
             }
-
+            //for (let index = 0; index < args.query.non_revoked.length; index++) { // TODO: support revocation 
+            //}
+            console.log(util.inspect(search_handle, false, null, true /* enable colors */));
+            console.log(util.inspect(args.wh, false, null, true /* enable colors */));
+            //await sdk.proverCloseCredentialsSearch(search_handle);
+            console.log(util.inspect(search_handle, false, null, true /* enable colors */));
+            console.log(util.inspect(args.wh, false, null, true /* enable colors */));
+            console.log(util.inspect([creds_to_get_from_ledger,creds_for_proof], false, null, true /* enable colors */));
+            return [creds_to_get_from_ledger,creds_for_proof];
         }
 
+    },
+    proverGetEntitiesFromLedger:{
+        type:'function',
+        args:['identifiers','poolHandle','schemaSubmitterDid','schemaId','credDefSubmitterDid','credDefId'],
+        fn  :async function(args){
+            console.log("args",args);
+            let schemas = {};
+            let credDefs = {};
+            let revStates = {};
+        
+            for(let referent of Object.keys(identifiers)) {
+                let item = identifiers[referent];
+                //get schema
+                let getSchemaRequest = await sdk.buildGetSchemaRequest( args.schemaSubmitterDid, args.schemaId);
+                let getSchemaResponse = await sdk.submitRequest(parseInt(args.poolHandle,10), getSchemaRequest);
+                let [, schema] = await sdk.parseGetSchemaResponse(getSchemaResponse);
+                schemas[receivedSchema.id] = schema;
+        
+                //get credDef
+                let getCredDefRequest = await sdk.buildGetCredDefRequest(args.credDefSubmitterDid, args.credDefId);
+                let getCredDefResponse = await sdk.submitRequest(parseInt(args.poolHandle,10), getCredDefRequest);
+                let [receivedCredDefId, receivedCredDef] = await sdk.parseGetCredDefResponse(getCredDefResponse);
+                credDefs[receivedCredDefId] = receivedCredDef;
+        
+                //if (item.rev_reg_seq_no) {
+                    // TODO Create Revocation States
+                //}
+            }
+        
+            return [schemas, credDefs, revStates];
+        }
     },
     proverSearchCredentials:{
         type:'function',
@@ -271,6 +324,30 @@ module.exports = {
         args:['wh', 'proofReq', 'requestedCredentials', 'masterSecretName', 'schemas', 'credentialDefs', 'revStates'],
         fn  :async function(args){
             return await sdk.proverCreateProof(parseInt(args.wh, 10), args.proofReq, args.requestedCredentials, args.masterSecretName, args.schemas, args.credentialDefs, args.revStates );
+        }
+    },
+    verifierGetEntitiesFromLedger:{
+        type:'function',
+        args:['identifiers'],
+        fn  :async function(){
+            let schemas = {};
+            let credDefs = {};
+            let revRegDefs = {};
+            let revRegs = {};
+
+            for(let referent of Object.keys(args.identifiers)) {
+                let item = identifiers[referent];
+                //let receivedSchema = //await indy.issuer.getSchema(item['schema_id']);
+                schemas[receivedSchema.id] = receivedSchema;
+
+                //let [receivedCredDefId, receivedCredDef] = //await indy.issuer.getCredDef(await indy.pool.get(), await indy.did.getEndpointDid(), item['cred_def_id']);
+                credDefs[receivedCredDefId] = receivedCredDef;
+
+                //if (item.rev_reg_seq_no) {
+                    // TODO Get Revocation Definitions and Revocation Registries
+                //}
+            }
+            return [schemas, credDefs, revRegDefs, revRegs];
         }
     },
     verifierVerifyProof:{
