@@ -1,4 +1,4 @@
-ruleset jwt {
+ruleset g2s.jwt {
   meta {
     shares __testing, test_jwt, hashFunctions
   }
