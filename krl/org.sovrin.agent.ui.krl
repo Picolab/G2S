@@ -1,12 +1,12 @@
 ruleset org.sovrin.agent.ui {
   meta {
     use module html
-    shares __testing
+    shares __testing, html
   }
   global {
     __testing = { "queries":
       [ { "name": "__testing" }
-      //, { "name": "entry", "args": [ "key" ] }
+      , { "name": "html", "args": [ "c_i" ] }
       ] , "events":
       [ //{ "domain": "d1", "type": "t1" }
       //, { "domain": "d2", "type": "t2", "attrs": [ "a1", "a2" ] }
