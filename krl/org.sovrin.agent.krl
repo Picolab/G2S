@@ -33,8 +33,9 @@ ruleset org.sovrin.agent {
       eid = "null";
       d ="sovrin";
       t = "pending_invitation";
-      ep = <<#{meta:host}/sky/event/#{eci}/#{eid}/#{d}/#{t}>>;
-      im = invitationMap(ep,uKR{["sovrin","verifyKey"]}).encode();
+      sEp = <<#{meta:host}/sky/event/#{eci}/#{eid}/#{d}/#{t}>>;
+      im = invitationMap(sEp,uKR{["sovrin","verifyKey"]}).encode();
+      ep = <<#{meta:host}/sky/cloud/#{eci}/org.sovrin.agent.ui/html.html>>;
       ep + "?c_i=" + math:base64encode(im)
     }
   }
