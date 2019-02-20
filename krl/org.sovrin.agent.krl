@@ -39,12 +39,11 @@ ruleset org.sovrin.agent {
     }
   }
   rule accept_connection_request {
-    select when sovrin pending_invitation // temporary for testing
+    select when sovrin pending_invitation protected re#(.*)# setting(protected)
     pre {
       tolog = klog(event:attrs.keys(),"event:attrs.keys()")
-      protected = event:attr("protected").klog("protected")
       message = math:base64decode(protected).klog("message")
-      huh = engine:decryptChannelMessage(message,meta:eci)
     }
+    send_directive("process")
   }
 }
