@@ -18,11 +18,4 @@ ruleset org.sovrin.agent.ui {
       html:header("invitation") + explain + invite + html:footer()
     }
   }
-  rule display_instructions {
-    select when sovrin pending_invitation c_i re#(.+)# setting(c_i)
-    every {
-      send_directive("instructions");
-      send_directive("_html",{"content":html(c_i)})
-    }
-  }
 }

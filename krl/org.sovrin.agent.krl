@@ -32,18 +32,18 @@ ruleset org.sovrin.agent {
       eci = uKR{"id"};
       eid = "null";
       d ="sovrin";
-      t = "pending_invitation";
+      t = "new_message";
       sEp = <<#{meta:host}/sky/event/#{eci}/#{eid}/#{d}/#{t}>>;
       im = invitationMap(sEp,uKR{["sovrin","verifyKey"]}).encode();
       ep = <<#{meta:host}/sky/cloud/#{eci}/org.sovrin.agent.ui/html.html>>;
       ep + "?c_i=" + math:base64encode(im)
     }
   }
-  rule accept_connection_request {
-    select when sovrin pending_invitation protected re#(.*)# setting(protected)
+  rule accept_new_message {
+    select when sovrin new_message protected re#(.*)# setting(protected)
     pre {
       tolog = klog(event:attrs.keys(),"event:attrs.keys()")
-      message = math:base64decode(protected).klog("message")
+      outer = math:base64decode(protected).klog("outer")
     }
     send_directive("process")
   }
