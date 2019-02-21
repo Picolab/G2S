@@ -1,5 +1,6 @@
 ruleset org.sovrin.agent {
   meta {
+    use module org.sovrin.agent_message alias a_msg
     use module io.picolabs.wrangler alias wrangler
     shares __testing, agent_Rx, invitationMap, invitation
   }
@@ -35,9 +36,9 @@ ruleset org.sovrin.agent {
       d ="sovrin";
       t = "new_message";
       sEp = <<#{meta:host}/sky/event/#{eci}/#{eid}/#{d}/#{t}>>;
-      im = invitationMap(sEp,uKR{["sovrin","indyPublic"]}).encode();
+      im = a_msg:invitationMap(null,null,uKR{["sovrin","indyPublic"]},sEp);
       ep = <<#{meta:host}/sky/cloud/#{eci}/org.sovrin.agent.ui/html.html>>;
-      ep + "?c_i=" + math:base64encode(im)
+      ep + "?c_i=" + math:base64encode(im.encode())
     }
   }
   rule route_new_message {
