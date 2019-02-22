@@ -19,6 +19,11 @@ ruleset org.sovrin.agent {
     agent_Rx = function(){
       wrangler:channel("agent")
     }
+    sEp = function(eci,eid,e_d,e_t){
+      d = e_d || "sovrin";
+      t = e_t || "new_message";
+      <<#{meta:host}/sky/event/#{eci}/#{eid}/#{d}/#{t}>>
+    }
     invitation = function(){
       uKR = agent_Rx();
       eci = uKR{"id"};
@@ -43,23 +48,28 @@ ruleset org.sovrin.agent {
       outer = math:base64decode(protected).klog("outer")
       msg = indy:unpack(event:attrs,meta:eci){"message"}.decode()
       msg_type = msg{"@type"}.klog("msg_type")
+      event_type = a_msg:specToEventType(msg_type)
     }
-    if msg_type.match(re#;spec/connections/1.0/request$#) then
-    send_directive("connection request")
+    if event_type then
+      send_directive("message routed",{"event_type":event_type})
     fired {
-      raise sovrin event "connection_request" attributes msg
+      raise sovrin event event_type attributes msg
     }
   }
-  rule handle_connection_request {
-    select when sovrin connection_request label re#(.+)# setting(label)
+  rule handle_connections_request {
+    select when sovrin connections_request label re#(.+)# setting(label)
     pre {
       connection = event:attr("connection").klog("connection")
       publicKeys = connection{["DIDDoc","publicKey"]}
         .map(function(x){x{"publicKeyBase58"}}).klog("publicKeys")
       se = connection{["DIDDoc","service"]}.head(){"serviceEndpoint"}.klog("se")
-      rm = {
-        "@type": "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/connections/1.0/response"
-        }.klog("response message")
+      req_id = connection{"id"}
+      chann = agent_Rx()
+      my_did = chann{"id"}
+      my_vk = chan{["sovrin","indyPublic"]}
+      endpoint = sEp(my_did)
+      rm = a_msg:connResMap(req_id, my_did, my_vk, endpoint)
+        .klog("response message")
       pm = indy:pack(rm,publicKeys,meta:eci).klog("packed message")
     }
     http:post(se,body=pm) setting(http_response)
