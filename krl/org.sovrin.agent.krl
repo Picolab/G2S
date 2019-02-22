@@ -19,16 +19,6 @@ ruleset org.sovrin.agent {
     agent_Rx = function(){
       wrangler:channel("agent")
     }
-    invitationMap = function(sEp,rKs){
-      {
-        "@type": "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/connections/1.0/invitation",
-        "@id": random:uuid(),
-        "label": random:word(),
-        "recipientKeys": [rKs],
-        "serviceEndpoint": sEp//,
-        //"routingKeys": [rKs]
-      }
-    }
     invitation = function(){
       uKR = agent_Rx();
       eci = uKR{"id"};
@@ -36,7 +26,12 @@ ruleset org.sovrin.agent {
       d ="sovrin";
       t = "new_message";
       sEp = <<#{meta:host}/sky/event/#{eci}/#{eid}/#{d}/#{t}>>;
-      im = a_msg:invitationMap(null,null,uKR{["sovrin","indyPublic"]},sEp);
+      im = a_msg:invitationMap(
+        ent:label,
+        null, // @id
+        uKR{["sovrin","indyPublic"]},
+        sEp
+      );
       ep = <<#{meta:host}/sky/cloud/#{eci}/org.sovrin.agent.ui/html.html>>;
       ep + "?c_i=" + math:base64encode(im.encode())
     }
