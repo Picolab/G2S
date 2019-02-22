@@ -63,11 +63,11 @@ ruleset org.sovrin.agent {
       publicKeys = connection{["DIDDoc","publicKey"]}
         .map(function(x){x{"publicKeyBase58"}}).klog("publicKeys")
       se = connection{["DIDDoc","service"]}.head(){"serviceEndpoint"}.klog("se")
-      req_id = connection{"id"}
+      req_id = connection{"id"}.klog("req_id")
       chann = agent_Rx()
-      my_did = chann{"id"}
-      my_vk = chan{["sovrin","indyPublic"]}
-      endpoint = sEp(my_did)
+      my_did = chann{"id"}.klog("my_did")
+      my_vk = chann{["sovrin","indyPublic"]}.klog("my_vk")
+      endpoint = sEp(my_did).klog("endpoint")
       rm = a_msg:connResMap(req_id, my_did, my_vk, endpoint)
         .klog("response message")
       pm = indy:pack(rm,publicKeys,meta:eci).klog("packed message")
@@ -75,6 +75,7 @@ ruleset org.sovrin.agent {
     http:post(se,body=pm) setting(http_response)
     fired {
       ent:agent_request := event:attrs;
+      ent:rm := rm;
       ent:se := se;
       ent:pm := pm;
       ent:http_response := http_response
