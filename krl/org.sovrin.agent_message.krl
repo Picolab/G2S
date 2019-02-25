@@ -1,12 +1,12 @@
 ruleset org.sovrin.agent_message {
   meta {
     provides specToEventType, invitationMap, connReqMap, connResMap
-    shares __testing
+    shares __testing, connResMap
   }
   global {
     __testing = { "queries":
       [ { "name": "__testing" }
-      //, { "name": "entry", "args": [ "key" ] }
+      , { "name": "connResMap", "args": [ "req_id", "my_did", "my_vk", "endpoint" ] }
       ] , "events":
       [ //{ "domain": "d1", "type": "t1" }
       //, { "domain": "d2", "type": "t2", "attrs": [ "a1", "a2" ] }
@@ -22,6 +22,9 @@ ruleset org.sovrin.agent_message {
 
     t_ping_req = "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/trust_ping/1.0/ping"
     t_ping_res = "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/trust_ping/1.0/ping_response"
+
+    // signature types
+    t_sign_single = "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/signature/1.0/ed25519Sha512_single"
 
     specToEventType = function(spec){
       p = spec.extract(re#^did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/([^/]+)/1.0/(.+)#);
@@ -63,12 +66,27 @@ ruleset org.sovrin.agent_message {
         }
       }
     }
-    connResMap = function(req_id, my_did, my_vk, endpoint){
+    toByteArray = function(str){
+      1.range(8)
+        .reduce(function(a,i){
+          [a[0].append(a[1]%256),math:int(a[1]/256)]
+        },[[]                   ,str.as("Number")  ])
+        .head().reverse()
+    }
+    sign_field = function(my_did,my_vk,field){
+      timestamp_bytes = toByteArray(time:now().time:strftime("%s"));
+      sig_data_bytes = timestamp_bytes
+        .append(field.encode().split("").map(function(x){ord(x)}));
       {
-        "@type": t_conn_res,
-        "@id": random:uuid(),
-        "~thread": {"thid": req_id},
-        "connection": {
+        "@type": t_sign_single,
+        "signature": indy:crypto_sign(sig_data_bytes,my_did),
+        "signer": my_vk,
+        "sig_data": indy:sig_data(sig_data_bytes)
+      }
+    }
+    connResMap = function(req_id, my_did, my_vk, endpoint){
+      connection =
+        {
           "DID": my_did,
           "DIDDoc": {
             "@context": "https://w3id.org/did/v1",
@@ -83,11 +101,15 @@ ruleset org.sovrin.agent_message {
               "id": my_did + ";indy",
               "type": "IndyAgent",
               "recipientKeys": [my_vk],
-              //"routingKeys": ["<example-agency-verkey>"],
               "serviceEndpoint": endpoint
              }]
           }
-        }
+        };
+      {
+        "@type": t_conn_res,
+        "@id": random:uuid(),
+        "~thread": {"thid": req_id},
+        "connection~sig": sign_field(my_did,my_vk,connection)
       }
     }
   }

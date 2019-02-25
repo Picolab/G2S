@@ -59,18 +59,19 @@ ruleset org.sovrin.agent {
   rule handle_connections_request {
     select when sovrin connections_request label re#(.+)# setting(label)
     pre {
+      req_id = event:attr("@id").klog("req_id")
       connection = event:attr("connection").klog("connection")
       publicKeys = connection{["DIDDoc","publicKey"]}
         .map(function(x){x{"publicKeyBase58"}}).klog("publicKeys")
       se = connection{["DIDDoc","service"]}.head(){"serviceEndpoint"}.klog("se")
-      req_id = connection{"id"}.klog("req_id")
       chann = agent_Rx()
       my_did = chann{"id"}.klog("my_did")
       my_vk = chann{["sovrin","indyPublic"]}.klog("my_vk")
       endpoint = sEp(my_did).klog("endpoint")
       rm = a_msg:connResMap(req_id, my_did, my_vk, endpoint)
         .klog("response message")
-      pm = indy:pack(rm,publicKeys,meta:eci).klog("packed message")
+      pm = indy:pack(rm.encode(),publicKeys,meta:eci)
+        .klog("packed message")
     }
     http:post(se,body=pm) setting(http_response)
     fired {
