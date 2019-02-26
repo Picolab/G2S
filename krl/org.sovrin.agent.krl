@@ -11,9 +11,9 @@ ruleset org.sovrin.agent {
       , { "name": "invitationMap", "args": [ "sEp", "rKs" ] }
       , { "name": "invitation" }
       ] , "events":
-      [ { "domain": "sovrin", "type": "pending_invitation", "attrs": [ "connection" ] }
+      [ { "domain": "sovrin", "type": "new_message", "attrs": [ "connection" ] }
       , { "domain": "sovrin", "type": "connection_request_retry_needed", "attrs": [] }
-      //, { "domain": "d2", "type": "t2", "attrs": [ "a1", "a2" ] }
+      , { "domain": "sovrin", "type": "new_invitation", "attrs": [ "url" ] }
       ]
     }
     agent_Rx = function(){
@@ -87,6 +87,37 @@ ruleset org.sovrin.agent {
     http:post(ent:se,body=ent:pm) setting(http_response)
     fired {
       klog(http_response)
+    }
+  }
+  rule accept_invitation {
+    select when sovrin new_invitation url re#(http.+)# setting(url)
+    pre {
+      qs = url.split("?").tail().join("?").klog("qs")
+      args = qs.split("&").klog("args")
+        .map(function(x){x.split("=")}).klog("mapped")
+        .collect(function(x){x[0]}).klog("collected")
+        .map(function(x){x[0][1]}).klog("flattened")
+      c_i = args{"c_i"}.klog("c_i")
+      im = math:base64decode(c_i).decode().klog("im")
+      chann = agent_Rx()
+      my_did = chann{"id"}.klog("my_did")
+      my_vk = chann{["sovrin","indyPublic"]}.klog("my_vk")
+      rm = a_msg:connReqMap(
+        label,
+        my_did,
+        my_vk,
+        sEp(meta:eci)
+      ).klog("rm")
+      reqURL = im{"serviceEndpoint"}.klog("reqURL")
+      packedBody = indy:pack(
+        rm.encode().klog("rm encoded"),
+        im{"recipientKeys"}.klog("key"),
+        my_did
+      ).klog("packedBody")
+    }
+    http:post(reqURL,body=packedBody) setting(http_response)
+    fired {
+      klog(http_response,"http_response")
     }
   }
 }
