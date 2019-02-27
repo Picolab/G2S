@@ -106,7 +106,7 @@ ruleset org.sovrin.agent {
         label,
         my_did,
         my_vk,
-        sEp(meta:eci)
+        sEp(my_did)
       ).klog("rm")
       reqURL = im{"serviceEndpoint"}.klog("reqURL")
       packedBody = indy:pack(
