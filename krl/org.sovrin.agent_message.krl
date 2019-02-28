@@ -1,5 +1,6 @@
 ruleset org.sovrin.agent_message {
   meta {
+    use module io.picolabs.visual_params alias vp
     provides specToEventType, invitationMap, connReqMap, connResMap,
       verify_signatures
     shares __testing
@@ -35,7 +36,7 @@ ruleset org.sovrin.agent_message {
       {
         "@type": t_conn_invit,
         "@id": id || random:uuid(),
-        "label": label || random:word(),
+        "label": label || vp:dname(),
         "recipientKeys": [key],
         "serviceEndpoint": endpoint
       }

@@ -28,13 +28,22 @@ $(function(){
 });
 </script>
 >>
-
+    explain = function(owner){
+      <<<p>You are #{owner}. (<a href="#urk">Not #{owner}?</a>)</p>
+<p>You are looking at an invitation that you can give to someone else
+who has the pico agent app.</p>
+<p>Have them either scan the QR Code below, or email them the content
+of the location bar of your browser.</p>
+>>
+    }
     html = function(c_i){
       map = math:base64decode(c_i);
-      explain = "<p>You are looking at an invitation: </p>";
-      html:header("invitation", scripts) + explain + invite(map)
-        + <<<div style="border:1px dashed silver;padding:5px;float:left"></div>
+      html:header("invitation", scripts) + explain(map.decode(){"label"})
+        + <<<div style="border:1px dashed silver;padding:5px;width:max-content"></div>
 >>
+        + <<<p>Technical details:</p>
+>>
+        + invite(map)
         + html:footer()
     }
   }
