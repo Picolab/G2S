@@ -1,12 +1,13 @@
 ruleset org.sovrin.agent_message {
   meta {
-    provides specToEventType, invitationMap, connReqMap, connResMap
-    shares __testing, connResMap
+    provides specToEventType, invitationMap, connReqMap, connResMap,
+      verify_signatures
+    shares __testing
   }
   global {
     __testing = { "queries":
       [ { "name": "__testing" }
-      , { "name": "connResMap", "args": [ "req_id", "my_did", "my_vk", "endpoint" ] }
+      //, { "name": "entry", "args": [ "key" ] }
       ] , "events":
       [ //{ "domain": "d1", "type": "t1" }
       //, { "domain": "d2", "type": "t2", "attrs": [ "a1", "a2" ] }
@@ -111,6 +112,20 @@ ruleset org.sovrin.agent_message {
         "~thread": {"thid": req_id},
         "connection~sig": sign_field(my_did,my_vk,connection)
       }
+    }
+    verify_signed_field = function(signed_field){
+      answer = indy:verify_signed_field(signed_field).klog("answer");
+      timestamp = answer{"timestamp"}
+        .values()
+        .reduce(function(a,dig){a*256+dig});
+      answer{"sig_verified"}
+        => answer{"field"}.decode().put("timestamp",time:new(timestamp))
+        | null
+    }
+    verify_signatures = function(map){
+      map >< "connection~sig"
+        => map.put("connection",verify_signed_field(map{"connection~sig"}))
+         | map
     }
   }
 }

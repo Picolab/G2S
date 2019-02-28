@@ -120,4 +120,11 @@ ruleset org.sovrin.agent {
       klog(http_response,"http_response")
     }
   }
+  rule handle_connections_response {
+    select when sovrin connections_response
+    pre {
+      connection = a_msg:verify_signatures(event:attrs)
+      .klog("connection")
+    }
+  }
 }
