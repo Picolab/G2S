@@ -29,21 +29,30 @@ $(function(){
 </script>
 >>
     explain = function(owner){
-      <<<p>You are #{owner}. (<a href="#urk">Not #{owner}?</a>)</p>
-<p>You are looking at an invitation that you can give to someone else
-who has the pico agent app.</p>
-<p>Have them either scan the QR Code below, or email them the content
-of the location bar of your browser.</p>
+      <<<p>You are looking at an invitation from #{owner}.
+(wait, <a href="#confusion"><em>I'm</em> #{owner}!</a>)</p>
+<p>You received this invitation because #{owner} wants to have a
+secure message connection with you.
+To respond to the invitation, you must have the Pico Agent App
+(or another <a href="https://sovrin.org/">Sovrin</a>-compatible agent app).</p>
+<p>Using your agent app, either scan the QR Code below,
+or paste the location bar of your browser into your app.</p>
 >>
     }
     html = function(c_i){
       map = math:base64decode(c_i);
-      html:header("invitation", scripts) + explain(map.decode(){"label"})
+      owner = map.decode(){"label"};
+      html:header("invitation", scripts) + explain(owner)
         + <<<div style="border:1px dashed silver;padding:5px;width:max-content"></div>
 >>
         + <<<p>Technical details:</p>
 >>
         + invite(map)
+        + <<<a name="confusion"><p>You're #{owner}:</p></a>
+<p>You'll need to give this URL to the person with whom you want
+a secure message-passing connection.
+Or, just have them use their Pico Agent App to scan the QR Code above.</p>
+>>
         + html:footer()
     }
   }
