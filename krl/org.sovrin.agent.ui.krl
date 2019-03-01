@@ -33,10 +33,11 @@ $(function(){
 (wait, <a href="#confusion"><em>I'm</em> #{owner}!</a>)</p>
 <p>You received this invitation because #{owner} wants to have a
 secure message connection with you.
-To respond to the invitation, you must have the Pico Agent App
+To accept the invitation, you must have the <em>Pico Agent App</em>
 (or another <a href="https://sovrin.org/">Sovrin</a>-compatible agent app).</p>
 <p>Using your agent app, either scan the QR Code below,
-or paste the location bar of your browser into your app.</p>
+or copy the URL from the location bar of your browser
+and paste it into your app.</p>
 >>
     }
     html = function(c_i){
