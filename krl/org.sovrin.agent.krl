@@ -11,6 +11,7 @@ ruleset org.sovrin.agent {
       // , { "name": "entry", "args": [ "key" ] }
       ] , "events":
       [ { "domain": "sovrin", "type": "need_invitation", "attrs": [ "auto_accept" ] }
+      , { "domain": "sovrin", "type": "new_invitation", "attrs": [ "url" ] }
       ]
     }
     agent_Rx = function(){
@@ -24,7 +25,7 @@ ruleset org.sovrin.agent {
     invitation = function(){
       uKR = agent_Rx();
       eci = uKR{"id"};
-      im = a_msg:invitationMap(
+      im = a_msg:connInviteMap(
         ent:label,
         null, // @id
         uKR{["sovrin","indyPublic"]},
@@ -85,20 +86,6 @@ ruleset org.sovrin.agent {
         .klog("packed message")
     }
     http:post(se,body=pm) setting(http_response)
-    fired {
-      ent:agent_request := event:attrs;
-      ent:rm := rm;
-      ent:se := se;
-      ent:pm := pm;
-      ent:http_response := http_response
-    }
-  }
-  rule retry_connection_request {
-    select when sovrin connection_request_retry_needed
-    http:post(ent:se,body=ent:pm) setting(http_response)
-    fired {
-      klog(http_response)
-    }
   }
   rule accept_invitation {
     select when sovrin new_invitation url re#(http.+)# setting(url)

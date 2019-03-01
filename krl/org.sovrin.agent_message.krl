@@ -1,7 +1,7 @@
 ruleset org.sovrin.agent_message {
   meta {
     use module io.picolabs.visual_params alias vp
-    provides specToEventType, invitationMap, connReqMap, connResMap,
+    provides specToEventType, connInviteMap, connReqMap, connResMap,
       verify_signatures
     shares __testing
   }
@@ -32,7 +32,7 @@ ruleset org.sovrin.agent_message {
       p = spec.extract(re#^did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/([^/]+)/1.0/(.+)#);
       p => p.join("_") | null
     }
-    invitationMap = function(id,label,key,endpoint){
+    connInviteMap = function(id,label,key,endpoint){
       {
         "@type": t_conn_invit,
         "@id": id || random:uuid(),
