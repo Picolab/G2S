@@ -35,6 +35,9 @@ ruleset org.sovrin.agent {
       ep + "?c_i=" + math:base64encode(im.encode())
     }
   }
+//
+// generate invitations
+//
   rule create_invitation {
     select when sovrin need_invitation
     pre {
@@ -53,40 +56,9 @@ ruleset org.sovrin.agent {
       ent:created_invitations{timestamp} := record
     }
   }
-  rule route_new_message {
-    select when sovrin new_message protected re#(.*)# setting(protected)
-    pre {
-      tolog = klog(event:attrs.keys(),"event:attrs.keys()")
-      outer = math:base64decode(protected).klog("outer")
-      msg = indy:unpack(event:attrs,meta:eci).klog("entire message"){"message"}.decode()
-      msg_type = msg{"@type"}.klog("msg_type")
-      event_type = a_msg:specToEventType(msg_type)
-    }
-    if event_type then
-      send_directive("message routed",{"event_type":event_type})
-    fired {
-      raise sovrin event event_type attributes msg
-    }
-  }
-  rule handle_connections_request {
-    select when sovrin connections_request label re#(.+)# setting(label)
-    pre {
-      req_id = event:attr("@id").klog("req_id")
-      connection = event:attr("connection").klog("connection")
-      publicKeys = connection{["DIDDoc","publicKey"]}
-        .map(function(x){x{"publicKeyBase58"}}).klog("publicKeys")
-      se = connection{["DIDDoc","service"]}.head(){"serviceEndpoint"}.klog("se")
-      chann = agent_Rx()
-      my_did = chann{"id"}.klog("my_did")
-      my_vk = chann{["sovrin","indyPublic"]}.klog("my_vk")
-      endpoint = sEp(my_did).klog("endpoint")
-      rm = a_msg:connResMap(req_id, my_did, my_vk, endpoint)
-        .klog("response message")
-      pm = indy:pack(rm.encode(),publicKeys,meta:eci)
-        .klog("packed message")
-    }
-    http:post(se,body=pm) setting(http_response)
-  }
+//
+// accept invitation
+//
   rule accept_invitation {
     select when sovrin new_invitation url re#(http.+)# setting(url)
     pre {
@@ -118,11 +90,80 @@ ruleset org.sovrin.agent {
       klog(http_response,"http_response")
     }
   }
+//
+// receive messages
+//
+  rule route_new_message {
+    select when sovrin new_message protected re#(.*)# setting(protected)
+    pre {
+      tolog = klog(event:attrs.keys(),"event:attrs.keys()")
+      outer = math:base64decode(protected).klog("outer")
+      msg = indy:unpack(event:attrs,meta:eci).klog("entire message"){"message"}.decode()
+      msg_type = msg{"@type"}.klog("msg_type")
+      event_type = a_msg:specToEventType(msg_type)
+    }
+    if event_type then
+      send_directive("message routed",{"event_type":event_type})
+    fired {
+      raise sovrin event event_type attributes msg
+    }
+  }
+//
+// basicmessage/message
+//
+  rule handle_basicmessage_message {
+    select when sovrin basicmessage_message
+    pre {
+      expected_reply = event:attr("content")
+        .extract(re#Reply with: (.+)#)
+        .head()
+        .klog("expected_reply")
+      bm = a_msg:basicMsgMap(expected_reply)
+        .klog("bm")
+    }
+  }
+//
+// connections/request
+//
+rule handle_connections_request {
+    select when sovrin connections_request label re#(.+)# setting(label)
+    pre {
+      req_id = event:attr("@id").klog("req_id")
+      connection = event:attr("connection").klog("connection")
+      publicKeys = connection{["DIDDoc","publicKey"]}
+        .map(function(x){x{"publicKeyBase58"}}).klog("publicKeys")
+      se = connection{["DIDDoc","service"]}.head(){"serviceEndpoint"}.klog("se")
+      chann = agent_Rx()
+      my_did = chann{"id"}.klog("my_did")
+      my_vk = chann{["sovrin","indyPublic"]}.klog("my_vk")
+      endpoint = sEp(my_did).klog("endpoint")
+      rm = a_msg:connResMap(req_id, my_did, my_vk, endpoint)
+        .klog("response message")
+      pm = indy:pack(rm.encode(),publicKeys,meta:eci)
+        .klog("packed message")
+    }
+    http:post(se,body=pm) setting(http_response)
+  }
+//
+// connections/response
+//
   rule handle_connections_response {
     select when sovrin connections_response
     pre {
       connection = a_msg:verify_signatures(event:attrs)
       .klog("connection")
     }
+  }
+//
+// trust_ping/ping
+//
+  rule handle_trust_ping_request {
+    select when sovrin trust_ping_ping
+  }
+//
+// trust_ping/ping_response
+//
+  rule handle_trust_ping_ping_response {
+    select when sovrin trust_ping_ping_response
   }
 }
