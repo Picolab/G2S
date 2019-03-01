@@ -97,8 +97,18 @@ ruleset org.sovrin.agent {
     select when sovrin new_message protected re#(.*)# setting(protected)
     pre {
       tolog = klog(event:attrs.keys(),"event:attrs.keys()")
-      outer = math:base64decode(protected).klog("outer")
-      msg = indy:unpack(event:attrs,meta:eci).klog("entire message"){"message"}.decode()
+      outer = math:base64decode(protected).decode()
+        .klog("outer")
+      kids = outer{"recipients"}
+        .map(function(x){x{["header","kid"]}})
+        .klog("kids")
+      my_vk = wrangler:channel(meta:eci){["sovrin","indyPublic"]}
+      sanity = (kids >< my_vk)
+        .klog("sanity")
+      all = indy:unpack(event:attrs,meta:eci).klog("all")
+      their_key = all{"sender_key"}.klog("their_key")
+      my_key = all{"recipient_key"}.klog("my_key")
+      msg = all{"message"}.decode()
       msg_type = msg{"@type"}.klog("msg_type")
       event_type = a_msg:specToEventType(msg_type)
     }
