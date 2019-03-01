@@ -1,0 +1,31 @@
+title Connection Protocol Test Suite
+actor Tester
+participant Suite
+participant Agent
+actor Owner
+
+Tester->Suite:start `pytest`
+Owner->Agent:create invitation
+Owner->Tester:send invitation
+Tester->Suite:paste invitation
+Suite->Agent:connections/request
+Agent->Owner:offer accept/reject
+Owner->Agent:accept
+Agent->Suite:connections/response
+Suite->Tester:pass 1
+Suite->Tester:copy invitation
+Tester->Owner:send invitation
+Owner->Agent:use invitation
+Agent->Suite:connections/request
+Suite->Tester:pass 2
+Suite->Agent:connections/response
+Suite->Tester:copy invitation
+Tester->Owner:send invitation
+Owner->Agent:use invitation
+Agent->Suite:connections/request
+Suite->Agent:connections/response
+Suite->Agent:basicmessage/message
+Agent->Owner:present message
+Owner->Agent:send reply message
+Agent->Suite:basicmessage/message
+Suite->Tester:pass 3
