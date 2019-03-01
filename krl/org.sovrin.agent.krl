@@ -2,18 +2,15 @@ ruleset org.sovrin.agent {
   meta {
     use module org.sovrin.agent_message alias a_msg
     use module io.picolabs.wrangler alias wrangler
-    shares __testing, agent_Rx, invitationMap, invitation
+    shares __testing, agent_Rx
   }
   global {
     __testing = { "queries":
       [ { "name": "__testing" }
       , { "name": "agent_Rx" }
-      , { "name": "invitationMap", "args": [ "sEp", "rKs" ] }
-      , { "name": "invitation" }
+      // , { "name": "entry", "args": [ "key" ] }
       ] , "events":
-      [ { "domain": "sovrin", "type": "new_message", "attrs": [ "connection" ] }
-      , { "domain": "sovrin", "type": "connection_request_retry_needed", "attrs": [] }
-      , { "domain": "sovrin", "type": "new_invitation", "attrs": [ "url" ] }
+      [ { "domain": "sovrin", "type": "need_invitation", "attrs": [ "auto_accept" ] }
       ]
     }
     agent_Rx = function(){
@@ -27,18 +24,32 @@ ruleset org.sovrin.agent {
     invitation = function(){
       uKR = agent_Rx();
       eci = uKR{"id"};
-      eid = "null";
-      d ="sovrin";
-      t = "new_message";
-      sEp = <<#{meta:host}/sky/event/#{eci}/#{eid}/#{d}/#{t}>>;
       im = a_msg:invitationMap(
         ent:label,
         null, // @id
         uKR{["sovrin","indyPublic"]},
-        sEp
+        sEp(eci)
       );
       ep = <<#{meta:host}/sky/cloud/#{eci}/org.sovrin.agent.ui/html.html>>;
       ep + "?c_i=" + math:base64encode(im.encode())
+    }
+  }
+  rule create_invitation {
+    select when sovrin need_invitation
+    pre {
+      the_invitation = invitation()
+      im = the_invitation
+        .split("c_i=").klog("split")
+        [1].klog("tail")
+        .math:base64decode().klog("base64decode")
+        .decode().klog("decode")
+      timestamp = time:now()
+      auto_accept = event:attr("auto_accept") => true | false
+      record = { "invitation": im, "auto_accept": auto_accept }
+    }
+    send_directive("_txt",{"content":the_invitation})
+    fired {
+      ent:created_invitations{timestamp} := record
     }
   }
   rule route_new_message {
@@ -46,7 +57,7 @@ ruleset org.sovrin.agent {
     pre {
       tolog = klog(event:attrs.keys(),"event:attrs.keys()")
       outer = math:base64decode(protected).klog("outer")
-      msg = indy:unpack(event:attrs,meta:eci){"message"}.decode()
+      msg = indy:unpack(event:attrs,meta:eci).klog("entire message"){"message"}.decode()
       msg_type = msg{"@type"}.klog("msg_type")
       event_type = a_msg:specToEventType(msg_type)
     }
