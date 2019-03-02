@@ -4,7 +4,8 @@ ruleset org.sovrin.agent_message {
     provides specToEventType,
       basicMsgMap,
       connInviteMap, connReqMap, connResMap,
-      verify_signatures
+      verify_signatures,
+      trustPingMap, trustPingResMap
     shares __testing
   }
   global {
@@ -137,6 +138,18 @@ ruleset org.sovrin.agent_message {
       map >< "connection~sig"
         => map.put("connection",verify_signed_field(map{"connection~sig"}))
          | map
+    }
+    trustPingMap = function(content){
+      {
+        "@type": t_ping_req,
+        "@id": random:uuid()
+      }
+    }
+    trustPingResMap = function(thid){
+      {
+        "@type": t_ping_res,
+        "~thread": { "thid": thid }
+      }
     }
   }
 }

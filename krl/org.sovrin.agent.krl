@@ -188,6 +188,16 @@ rule handle_connections_request {
 //
   rule handle_trust_ping_request {
     select when sovrin trust_ping_ping
+    pre {
+      msg = event:attr("message")
+      rm =a_msg:trustPingResMap(msg{"@id"})
+        .klog("response message")
+      their_key = event:attr("sender_key")
+      pm = indy:pack(rm.encode(),[their_key],meta:eci)
+        .klog("packed message")
+      se = ent:endpoints{"their_key"} || "http://localhost:3000/indy"
+    }
+    http:post(se,body=pm) setting(http_response)
   }
 //
 // trust_ping/ping_response
