@@ -37,7 +37,7 @@ ruleset org.sovrin.agent_message {
     basicMsgMap = function(content){
       {
         "@type": t_basic_msg,
-        "~l18n": { "locale": "en" },
+        "~l10n": { "locale": "en" },
         "sent_time": time:now(),
         "content": content
       }

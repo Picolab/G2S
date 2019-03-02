@@ -115,7 +115,7 @@ ruleset org.sovrin.agent {
     if event_type then
       send_directive("message routed",{"event_type":event_type})
     fired {
-      raise sovrin event event_type attributes msg
+      raise sovrin event event_type attributes all.put("message",msg)
     }
   }
 //
@@ -124,22 +124,30 @@ ruleset org.sovrin.agent {
   rule handle_basicmessage_message {
     select when sovrin basicmessage_message
     pre {
-      expected_reply = event:attr("content")
+      msg = event:attr("message")
+      expected_reply = msg{"content"}
         .extract(re#Reply with: (.+)#)
         .head()
         .klog("expected_reply")
       bm = a_msg:basicMsgMap(expected_reply)
         .klog("bm")
+      their_key = event:attr("sender_key")
+      pm = indy:pack(bm.encode(),[their_key],meta:eci)
+        .klog("packed message")
+      se = ent:endpoints{"their_key"} || "http://localhost:3000/indy"
     }
+    if se then
+      http:post(se,body=pm) setting(http_response)
   }
 //
 // connections/request
 //
 rule handle_connections_request {
-    select when sovrin connections_request label re#(.+)# setting(label)
+    select when sovrin connections_request
     pre {
-      req_id = event:attr("@id").klog("req_id")
-      connection = event:attr("connection").klog("connection")
+      msg = event:attr("message")
+      req_id = msg{"@id"}.klog("req_id")
+      connection = msg{"connection"}.klog("connection")
       publicKeys = connection{["DIDDoc","publicKey"]}
         .map(function(x){x{"publicKeyBase58"}}).klog("publicKeys")
       se = connection{["DIDDoc","service"]}.head(){"serviceEndpoint"}.klog("se")
@@ -160,8 +168,19 @@ rule handle_connections_request {
   rule handle_connections_response {
     select when sovrin connections_response
     pre {
-      connection = a_msg:verify_signatures(event:attrs)
-      .klog("connection")
+      msg = event:attr("message")
+      verified = a_msg:verify_signatures(msg)
+        .klog("verified")
+      connection = verified{"connection"}
+        .klog("connection")
+      service = connection && connection{["DIDDoc","service"]}
+        .filter(function(x){x{"type"}=="IndyAgent"})
+        .head()
+        .klog("service")
+    }
+    if service then noop()
+    fired {
+      ent:se{service{"recipientKeys"}.head()} := service{"serviceEndpoint"}
     }
   }
 //
