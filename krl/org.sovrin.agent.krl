@@ -12,6 +12,7 @@ ruleset org.sovrin.agent {
       ] , "events":
       [ { "domain": "sovrin", "type": "need_invitation", "attrs": [ "auto_accept" ] }
       , { "domain": "sovrin", "type": "new_invitation", "attrs": [ "url" ] }
+      , { "domain": "sovrin", "type": "trust_ping_requested" }
       ]
     }
     agent_Rx = function(){
@@ -200,11 +201,30 @@ rule handle_connections_request {
     }
     if may_respond then
       http:post(se,body=pm) setting(http_response)
+    always {
+      ent:trust_ping_vk := their_key
+    }
   }
 //
 // trust_ping/ping_response
 //
   rule handle_trust_ping_ping_response {
     select when sovrin trust_ping_ping_response
+  }
+//
+// initiate trust ping
+//
+  rule initiate_trust_ping {
+    select when sovrin trust_ping_requested
+    pre {
+      rm = a_msg:trustPingMap()
+      pm = indy:pack(
+        rm.encode(),
+        [ent:trust_ping_vk],
+        agent_Rx(){"id"}
+      )
+      se = ent:endpoints{"their_key"} || "http://localhost:3000/indy"
+    }
+    http:post(se,body=pm) setting(http_response)
   }
 }
