@@ -196,8 +196,10 @@ rule handle_connections_request {
       pm = indy:pack(rm.encode(),[their_key],meta:eci)
         .klog("packed message")
       se = ent:endpoints{"their_key"} || "http://localhost:3000/indy"
+      may_respond = msg{"response_requested"} == false => false | true
     }
-    http:post(se,body=pm) setting(http_response)
+    if may_respond then
+      http:post(se,body=pm) setting(http_response)
   }
 //
 // trust_ping/ping_response
