@@ -37,25 +37,6 @@ ruleset org.sovrin.agent {
     }
   }
 //
-// send ssi_agent_wire message
-//
-  rule send_ssi_agent_wire_message {
-    select when sovrin new_ssi_agent_wire_message
-    pre {
-      se = event:attr("serviceEndpoint")
-      pm = event:attr("packedMessage")
-    }
-    http:post(
-      se,
-      body=pm,
-      headers={"content-type":"application/ssi-agent-wire"}
-    ) setting(http_response)
-    fired {
-      ent:last_http_response := http_response;
-      klog(http_response,"http_response")
-    }
-  }
-//
 // generate invitations
 //
   rule create_invitation {
