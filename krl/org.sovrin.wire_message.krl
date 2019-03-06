@@ -1,5 +1,6 @@
 ruleset org.sovrin.wire_message {
   meta {
+    use module io.picolabs.wrangler alias wrangler
     shares __testing
   }
   global {
@@ -12,6 +13,23 @@ ruleset org.sovrin.wire_message {
       ]
     }
   }
+//
+// on ruleset_added
+//
+rule on_installation {
+  select when wrangler ruleset_added where event:attr("rids") >< meta:rid
+  pre {
+    wire_message = event:attr("rs_attrs")
+    se = wire_message{"serviceEndpoint"}
+    pm = wire_message{"packedMessage"}
+  }
+  if wire_message then noop()
+  fired {
+    raise sovrin event "new_ssi_agent_wire_message" attributes {
+      "serviceEndpoint": se, "packedMessage": pm
+     }
+  }
+}
 //
 // send ssi_agent_wire message
 //
@@ -28,7 +46,23 @@ ruleset org.sovrin.wire_message {
     ) setting(http_response)
     fired {
       ent:last_http_response := http_response;
-      klog(http_response,"http_response")
+      klog(http_response,"http_response");
+      raise sovrin event "mission_accomplished"
     }
+  }
+//
+// done so cease to exist
+//
+  rule done_so_cease_to_exist {
+    select when sovrin mission_accomplished
+    pre {
+      eci = wrangler:parent_eci()
+    }
+    if eci then
+    event:send({"eci": eci, "domain": "wrangler", "type": "child_deletion",
+      "attrs": {
+        "id": meta:picoId.klog("id"),
+        "name": wrangler:name().klog("name")}
+    })
   }
 }

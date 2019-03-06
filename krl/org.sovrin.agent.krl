@@ -87,7 +87,9 @@ ruleset org.sovrin.agent {
       ).klog("packedBody")
     }
     fired {
-      raise sovrin event "new_ssi_agent_wire_message" attributes {
+      ent:connReq := ent:connReq.defaultsTo(0) + 1;
+      raise wrangler event "new_child_request" attributes {
+        "name": "connReq" + ent:connReq, "rids": "org.sovrin.wire_message",
         "serviceEndpoint": reqURL, "packedMessage": packedBody
       }
     }
@@ -140,7 +142,9 @@ ruleset org.sovrin.agent {
     }
     if se then noop()
     fired {
-      raise sovrin event "new_ssi_agent_wire_message" attributes {
+      ent:basicMsg := ent:basicMsg.defaultsTo(0) + 1;
+      raise wrangler event "new_child_request" attributes {
+        "name": "basicMsg" + ent:basicMsg, "rids": "org.sovrin.wire_message",
         "serviceEndpoint": se, "packedMessage": pm
       }
     }
@@ -167,7 +171,9 @@ rule handle_connections_request {
         .klog("packed message")
     }
     fired {
-      raise sovrin event "new_ssi_agent_wire_message" attributes {
+      ent:connRes := ent:connRes.defaultsTo(0) + 1;
+      raise wrangler event "new_child_request" attributes {
+        "name": "connRes" + ent:connRes, "rids": "org.sovrin.wire_message",
         "serviceEndpoint": se, "packedMessage": pm
       }
     }
@@ -208,11 +214,15 @@ rule handle_connections_request {
       se = ent:endpoints{"their_key"} || "http://localhost:3000/indy"
       may_respond = msg{"response_requested"} == false => false | true
     }
-    if may_respond then noop()
+    if may_respond then http:post(se,body=pm) setting(http_response)
     fired {
-      raise sovrin event "new_ssi_agent_wire_message" attributes {
+/*
+      ent:pingRes := ent:pingRes.defaultsTo(0) + 1;
+      raise wrangler event "new_child_request" attributes {
+        "name": "pingRes" + ent:pingRes, "rids": "org.sovrin.wire_message",
         "serviceEndpoint": se, "packedMessage": pm
       }
+*/
     }
     finally {
       ent:trust_ping_vk := their_key
@@ -239,7 +249,9 @@ rule handle_connections_request {
       se = ent:endpoints{"their_key"} || "http://localhost:3000/indy"
     }
     fired {
-      raise sovrin event "new_ssi_agent_wire_message" attributes {
+      ent:pingReq := ent:pingReq.defaultsTo(0) + 1;
+      raise wrangler event "new_child_request" attributes {
+        "name": "pingReq" + ent:pingReq, "rids": "org.sovrin.wire_message",
         "serviceEndpoint": se, "packedMessage": pm
       }
     }
