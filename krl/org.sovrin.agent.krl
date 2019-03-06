@@ -37,6 +37,25 @@ ruleset org.sovrin.agent {
     }
   }
 //
+// send ssi_agent_wire message
+//
+  rule send_ssi_agent_wire_message {
+    select when sovrin new_ssi_agent_wire_message
+    pre {
+      se = event:attr("serviceEndpoint")
+      pm = event:attr("packedMessage")
+    }
+    http:post(
+      se,
+      body=pm,
+      headers={"content-type":"application/ssi-agent-wire"}
+    ) setting(http_response)
+    fired {
+      ent:last_http_response := http_response;
+      klog(http_response,"http_response")
+    }
+  }
+//
 // generate invitations
 //
   rule create_invitation {
@@ -86,9 +105,10 @@ ruleset org.sovrin.agent {
         my_did
       ).klog("packedBody")
     }
-    http:post(reqURL,body=packedBody) setting(http_response)
     fired {
-      klog(http_response,"http_response")
+      raise sovrin event "new_ssi_agent_wire_message" attributes {
+        "serviceEndpoint": reqURL, "packedMessage": packedBody
+      }
     }
   }
 //
@@ -137,8 +157,12 @@ ruleset org.sovrin.agent {
         .klog("packed message")
       se = ent:endpoints{"their_key"} || "http://localhost:3000/indy"
     }
-    if se then
-      http:post(se,body=pm) setting(http_response)
+    if se then noop()
+    fired {
+      raise sovrin event "new_ssi_agent_wire_message" attributes {
+        "serviceEndpoint": se, "packedMessage": pm
+      }
+    }
   }
 //
 // connections/request
@@ -161,7 +185,11 @@ rule handle_connections_request {
       pm = indy:pack(rm.encode(),publicKeys,meta:eci)
         .klog("packed message")
     }
-    http:post(se,body=pm) setting(http_response)
+    fired {
+      raise sovrin event "new_ssi_agent_wire_message" attributes {
+        "serviceEndpoint": se, "packedMessage": pm
+      }
+    }
   }
 //
 // connections/response
@@ -199,9 +227,13 @@ rule handle_connections_request {
       se = ent:endpoints{"their_key"} || "http://localhost:3000/indy"
       may_respond = msg{"response_requested"} == false => false | true
     }
-    if may_respond then
-      http:post(se,body=pm) setting(http_response)
-    always {
+    if may_respond then noop()
+    fired {
+      raise sovrin event "new_ssi_agent_wire_message" attributes {
+        "serviceEndpoint": se, "packedMessage": pm
+      }
+    }
+    finally {
       ent:trust_ping_vk := their_key
     }
   }
@@ -225,6 +257,10 @@ rule handle_connections_request {
       )
       se = ent:endpoints{"their_key"} || "http://localhost:3000/indy"
     }
-    http:post(se,body=pm) setting(http_response)
+    fired {
+      raise sovrin event "new_ssi_agent_wire_message" attributes {
+        "serviceEndpoint": se, "packedMessage": pm
+      }
+    }
   }
 }
