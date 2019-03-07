@@ -56,7 +56,7 @@ ruleset org.sovrin.agent_message {
       {
         "@id": random:uuid(),
         "@type": t_conn_req,
-        "label": label,
+        "label": label || vp:dname(),
         "connection": {
           "DID": my_did,
           "DIDDoc": {
