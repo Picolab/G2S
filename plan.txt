@@ -1,0 +1,22 @@
+
+
+Project goal: create a Sovrin agent using picos
+
+Write rulesets which, when installed in a pico, make that pico behave as
+a Sovrin agent. Call any such pico "a Pico Agent".
+
+1. a Pico Agent provides a UI for its (human) owner
+2. a Pico Agent interoperates with other Sovrin Agents
+ - can provide an invitation to connect
+ - can accept another agent's invitation to connect
+ - can request a connection using another's invitation
+ - can respond to another's connection request
+ - can send/receive basic messages
+ - can send/receive trust pings
+3. a Pico Agent maintains a list of connections to other agents
+ - its own secret key for each connection
+ - the public key of the other end of each connection
+4. a Pico Agent maintains owner credentials for each connection
+ - can ask for a credential through a connection
+ - can verify a credential received from another agent
+5. a Pico Agent can provide a credential-based proof to another agent
