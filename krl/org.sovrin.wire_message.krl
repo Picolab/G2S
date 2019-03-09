@@ -48,6 +48,7 @@ rule on_installation {
       ent:last_http_response := http_response;
       klog(http_response,"http_response");
       raise sovrin event "mission_accomplished"
+        if http_response{"status_code"}.match(re#^2\d\d$#)
     }
   }
 //
