@@ -2,7 +2,7 @@ ruleset org.sovrin.agent {
   meta {
     use module org.sovrin.agent_message alias a_msg
     use module io.picolabs.wrangler alias wrangler
-    shares __testing, agent_Rx, connection
+    shares __testing, agent_Rx, connection, ui
   }
   global {
     __testing = { "queries":
@@ -21,6 +21,12 @@ ruleset org.sovrin.agent {
     }
     connection = function(key){
       ent:connections
+    }
+    ui = function(){
+      {
+        "name": wrangler:name(),
+        "connections": ent:connections
+      }
     }
     sEp = function(eci,eid,e_d,e_t){
       d = e_d || "sovrin";
