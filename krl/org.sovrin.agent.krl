@@ -2,13 +2,13 @@ ruleset org.sovrin.agent {
   meta {
     use module org.sovrin.agent_message alias a_msg
     use module io.picolabs.wrangler alias wrangler
-    shares __testing, agent_Rx
+    shares __testing, agent_Rx, connection
   }
   global {
     __testing = { "queries":
       [ { "name": "__testing" }
       , { "name": "agent_Rx" }
-      // , { "name": "entry", "args": [ "key" ] }
+      , { "name": "connection", "args": [ "key" ] }
       ] , "events":
       [ { "domain": "sovrin", "type": "need_invitation", "attrs": [ "auto_accept" ] }
       , { "domain": "sovrin", "type": "new_invitation", "attrs": [ "url" ] }
@@ -18,6 +18,9 @@ ruleset org.sovrin.agent {
     }
     agent_Rx = function(){
       wrangler:channel("agent")
+    }
+    connection = function(key){
+      ent:connections
     }
     sEp = function(eci,eid,e_d,e_t){
       d = e_d || "sovrin";
@@ -170,8 +173,16 @@ rule handle_connections_request {
         .klog("response message")
       pm = indy:pack(rm.encode(),publicKeys,meta:eci)
         .klog("packed message")
+      c = {
+        "label": msg{"label"},
+        "my_did": my_did,
+        "their_did": connection{"DID"},
+        "their_vk": publicKeys.head(),
+        "their_endpoint": se
+      }.klog("c")
     }
     fired {
+      ent:connections := ent:connections.defaultsTo([]).append(c);
       ent:connRes := ent:connRes.defaultsTo(0) + 1;
       raise wrangler event "new_child_request" attributes {
         "name": "connRes" + ent:connRes, "rids": "org.sovrin.wire_message",
