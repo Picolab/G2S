@@ -13,6 +13,7 @@ ruleset org.sovrin.agent {
       [ { "domain": "sovrin", "type": "need_invitation", "attrs": [ "auto_accept" ] }
       , { "domain": "sovrin", "type": "new_invitation", "attrs": [ "url" ] }
       , { "domain": "sovrin", "type": "trust_ping_requested" }
+      , { "domain": "sovrin", "type": "send_basicmessage", "attrs": [ "their_vk", "content" ] }
       ]
     }
     agent_Rx = function(){
@@ -140,7 +141,7 @@ ruleset org.sovrin.agent {
         .klog("packed message")
       se = ent:endpoints{"their_key"} || "http://localhost:3000/indy"
     }
-    if se then noop()
+    if expected_reply && se then noop()
     fired {
       ent:basicMsg := ent:basicMsg.defaultsTo(0) + 1;
       raise wrangler event "new_child_request" attributes {
@@ -255,5 +256,21 @@ rule handle_connections_request {
         "serviceEndpoint": se, "packedMessage": pm
       }
     }
+  }
+//
+// initiate basicmessage
+//
+  rule initiate_basicmessage {
+    select when sovrin send_basicmessage
+    pre {
+      their_key = event:attr("their_vk")
+      content = event:attr("content")
+      bm = a_msg:basicMsgMap(content)
+        .klog("bm")
+      pm = indy:pack(bm.encode(),[their_key],agent_Rx(){"id"})
+        .klog("packed message")
+      se = ent:endpoints{"their_key"} || "http://localhost:3001/indy"
+    }
+    http:post(se,body=pm) setting(http_response)
   }
 }
