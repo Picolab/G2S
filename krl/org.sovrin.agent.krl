@@ -2,16 +2,14 @@ ruleset org.sovrin.agent {
   meta {
     use module org.sovrin.agent_message alias a_msg
     use module io.picolabs.wrangler alias wrangler
-    shares __testing, agent_Rx, connection, ui
+    shares __testing, agent_Rx, ui
   }
   global {
     __testing = { "queries":
       [ { "name": "__testing" }
       , { "name": "agent_Rx" }
-      , { "name": "connection", "args": [ "key" ] }
       ] , "events":
-      [ { "domain": "sovrin", "type": "need_invitation", "attrs": [ "auto_accept" ] }
-      , { "domain": "sovrin", "type": "new_invitation", "attrs": [ "url" ] }
+      [ { "domain": "sovrin", "type": "new_invitation", "attrs": [ "url" ] }
       , { "domain": "sovrin", "type": "trust_ping_requested" }
       , { "domain": "sovrin", "type": "send_basicmessage", "attrs": [ "their_vk", "content" ] }
       ]
@@ -61,12 +59,10 @@ ruleset org.sovrin.agent {
         .math:base64decode().klog("base64decode")
         .decode().klog("decode")
       timestamp = time:now()
-      auto_accept = event:attr("auto_accept") => true | false
-      record = { "invitation": im, "auto_accept": auto_accept }
     }
     send_directive("_txt",{"content":the_invitation})
     fired {
-      ent:created_invitations{timestamp} := record
+      ent:created_invitations{timestamp} := im
     }
   }
 //
