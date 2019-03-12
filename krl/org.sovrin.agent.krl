@@ -20,7 +20,9 @@ ruleset org.sovrin.agent {
       wrangler:channel("agent")
     }
     connection = function(key){
-      ent:connections
+      ent:connections.defaultsTo([])
+        .filter(function(c){c{"their_vk"}==key})
+        .head()
     }
     ui = function(){
       {
@@ -148,7 +150,7 @@ ruleset org.sovrin.agent {
       their_key = event:attr("sender_key")
       pm = indy:pack(bm.encode(),[their_key],meta:eci)
         .klog("packed message")
-      se = ent:endpoints{"their_key"} || "http://localhost:3000/indy"
+      se = connection(their_key){"their_endpoint"} || "http://localhost:3000/indy"
     }
     if expected_reply && se then noop()
     fired {
@@ -214,7 +216,7 @@ rule handle_connections_request {
     }
     if service then noop()
     fired {
-      ent:se{service{"recipientKeys"}.head()} := service{"serviceEndpoint"}
+      //ent:se{service{"recipientKeys"}.head()} := service{"serviceEndpoint"}
     }
   }
 //
@@ -229,7 +231,7 @@ rule handle_connections_request {
       their_key = event:attr("sender_key")
       pm = indy:pack(rm.encode(),[their_key],meta:eci)
         .klog("packed message")
-      se = ent:endpoints{"their_key"} || "http://localhost:3000/indy"
+      se = connection(their_key){"their_endpoint"} || "http://localhost:3000/indy"
       may_respond = msg{"response_requested"} == false => false | true
     }
     if may_respond then http:post(se,body=pm) setting(http_response)
@@ -264,7 +266,7 @@ rule handle_connections_request {
         [ent:trust_ping_vk],
         agent_Rx(){"id"}
       )
-      se = ent:endpoints{"their_key"} || "http://localhost:3000/indy"
+      se = connection(ent:trust_ping_vk){"their_endpoint"} || "http://localhost:3000/indy"
     }
     fired {
       ent:pingReq := ent:pingReq.defaultsTo(0) + 1;
@@ -286,7 +288,7 @@ rule handle_connections_request {
         .klog("bm")
       pm = indy:pack(bm.encode(),[their_key],agent_Rx(){"id"})
         .klog("packed message")
-      se = ent:endpoints{"their_key"} || "http://localhost:3001/indy"
+      se = connection(their_key){"their_endpoint"} || "http://localhost:3001/indy"
     }
     http:post(se,body=pm) setting(http_response)
   }
