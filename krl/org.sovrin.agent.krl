@@ -288,4 +288,23 @@ rule handle_connections_request {
     }
     http:post(se,body=pm) setting(http_response)
   }
+//
+// convenience rule to clean up known expired connection
+//
+  rule delete_connection {
+    select when sovrin connection_expired
+    pre {
+      my_did = meta:eci
+      their_vk = event:attr("their_vk")
+      index = ent:connections.defaultsTo([])
+        .reduce(function(a,c,i){
+          a<0 && c{"my_did"}==my_did && c{"their_vk"}==their_vk => i | a
+        },-1)
+    }
+    if index >= 0 && index < ent:connections.length() then
+      send_directive("delete",{"index":index})
+    fired {
+      ent:connections := ent:connections.splice(index,1)
+    }
+  }
 }
