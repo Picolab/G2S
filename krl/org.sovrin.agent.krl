@@ -47,6 +47,22 @@ ruleset org.sovrin.agent {
     }
   }
 //
+// on ruleset_added
+//
+rule on_installation {
+  select when wrangler ruleset_added where event:attr("rids") >< meta:rid
+  pre {
+    have_channel = agent_Rx()
+  }
+  if not have_channel then
+    wrangler:createChannel(meta:picoId,"agent","sovrin") setting(channel)
+  fired {
+    ent:invitation_channel := channel
+  } else {
+    ent:invitation_channel := have_channel
+  }
+}
+//
 // generate invitations
 //
   rule create_invitation {
