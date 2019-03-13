@@ -9,9 +9,7 @@ ruleset org.sovrin.agent {
       [ { "name": "__testing" }
       , { "name": "agent_Rx" }
       ] , "events":
-      [ { "domain": "sovrin", "type": "new_invitation", "attrs": [ "url" ] }
-      , { "domain": "sovrin", "type": "trust_ping_requested" }
-      , { "domain": "sovrin", "type": "send_basicmessage", "attrs": [ "their_vk", "content" ] }
+      [ { "domain": "sovrin", "type": "send_basicmessage", "attrs": [ "their_vk", "content" ] }
       ]
     }
     agent_Rx = function(){
