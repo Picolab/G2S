@@ -25,7 +25,8 @@ ruleset org.sovrin.agent {
     ui = function(){
       {
         "name": wrangler:name(),
-        "connections": ent:connections
+        "connections": ent:connections,
+        "invitation": invitation()
       }
     }
     sEp = function(eci,eid,e_d,e_t){
@@ -62,25 +63,6 @@ rule on_installation {
     ent:invitation_channel := have_channel
   }
 }
-//
-// generate invitations
-//
-  rule create_invitation {
-    select when sovrin need_invitation
-    pre {
-      the_invitation = invitation()
-      im = the_invitation
-        .split("c_i=").klog("split")
-        [1].klog("tail")
-        .math:base64decode().klog("base64decode")
-        .decode().klog("decode")
-      timestamp = time:now()
-    }
-    send_directive("_txt",{"content":the_invitation})
-    fired {
-      ent:created_invitations{timestamp} := im
-    }
-  }
 //
 // accept invitation
 //
