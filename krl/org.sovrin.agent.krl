@@ -261,9 +261,6 @@ rule handle_connections_request {
       }
 */
     }
-    finally {
-      ent:trust_ping_vk := their_key
-    }
   }
 //
 // trust_ping/ping_response
@@ -277,13 +274,14 @@ rule handle_connections_request {
   rule initiate_trust_ping {
     select when sovrin trust_ping_requested
     pre {
+      their_vk = event:attr("their_vk")
       rm = a_msg:trustPingMap()
       pm = indy:pack(
         rm.encode(),
-        [ent:trust_ping_vk],
+        [their_vk],
         agent_Rx(){"id"}
       )
-      se = connection(ent:trust_ping_vk){"their_endpoint"} || "http://localhost:3000/indy"
+      se = connection(their_vk){"their_endpoint"} || "http://localhost:3000/indy"
     }
     fired {
       ent:pingReq := ent:pingReq.defaultsTo(0) + 1;
