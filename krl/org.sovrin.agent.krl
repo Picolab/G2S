@@ -148,7 +148,7 @@ rule on_installation {
       their_key = event:attr("sender_key")
       pm = indy:pack(bm.encode(),[their_key],meta:eci)
         .klog("packed message")
-      se = connection(their_key){"their_endpoint"} || "http://localhost:3000/indy"
+      se = connection(their_key){"their_endpoint"}
     }
     if expected_reply && se then noop()
     fired {
@@ -248,10 +248,10 @@ rule handle_connections_request {
       their_key = event:attr("sender_key")
       pm = indy:pack(rm.encode(),[their_key],meta:eci)
         .klog("packed message")
-      se = connection(their_key){"their_endpoint"} || "http://localhost:3000/indy"
+      se = connection(their_key){"their_endpoint"}
       may_respond = msg{"response_requested"} == false => false | true
     }
-    if may_respond then http:post(se,body=pm) setting(http_response)
+    if se && may_respond then http:post(se,body=pm) setting(http_response)
     fired {
 /*
       ent:pingRes := ent:pingRes.defaultsTo(0) + 1;
@@ -281,8 +281,9 @@ rule handle_connections_request {
         [their_vk],
         agent_Rx(){"id"}
       )
-      se = connection(their_vk){"their_endpoint"} || "http://localhost:3000/indy"
+      se = connection(their_vk){"their_endpoint"}
     }
+    if se then noop()
     fired {
       ent:pingReq := ent:pingReq.defaultsTo(0) + 1;
       raise wrangler event "new_child_request" attributes {
@@ -303,9 +304,10 @@ rule handle_connections_request {
         .klog("bm")
       pm = indy:pack(bm.encode(),[their_key],agent_Rx(){"id"})
         .klog("packed message")
-      se = connection(their_key){"their_endpoint"} || "http://localhost:3001/indy"
+      se = connection(their_key){"their_endpoint"}
     }
-    http:post(se,body=pm) setting(http_response)
+    if se then
+      http:post(se,body=pm) setting(http_response)
   }
 //
 // convenience rule to clean up known expired connection
