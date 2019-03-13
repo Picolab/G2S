@@ -109,8 +109,14 @@ rule on_installation {
         im{"recipientKeys"}.klog("key"),
         my_did
       ).klog("packedBody")
+      pc = {
+        "label": im{"label"},
+        "my_did": my_did,
+        "@id": rm{"@id"}
+      }.klog("pc")
     }
     fired {
+      ent:pending_conn := ent:pending_conn.defaultsTo([]).append(pc);
       ent:connReq := ent:connReq.defaultsTo(0) + 1;
       raise wrangler event "new_child_request" attributes {
         "name": "connReq" + ent:connReq, "rids": "org.sovrin.wire_message",
@@ -225,10 +231,29 @@ rule handle_connections_request {
         .filter(function(x){x{"type"}=="IndyAgent"})
         .head()
         .klog("service")
+      cid = verified{["~thread","thid"]}
+        .klog("cid")
+      index = ent:pending_conn.defaultsTo([])
+        .klog("pending connections")
+        .reduce(function(a,p,i){
+          a<0 && p{"@id"}==cid => i | a
+        },-1)
+        .klog("index")
+        .defaultsTo(ent:pending_conn.head(){"@id"}==cid => 0 | -1)
+        .klog("index")
+      c = index < 0 => null | ent:pending_conn[index]
+        .delete("@id")
+        .put({
+          "their_did": connection{"DID"},
+          "their_vk": service{"recipientKeys"}.head(),
+          "their_endpoint": service{"serviceEndpoint"}
+        })
+        .klog("c")
     }
-    if service then noop()
+    if typeof(index) == "Number" && index >= 0 then noop()
     fired {
-      //ent:se{service{"recipientKeys"}.head()} := service{"serviceEndpoint"}
+      ent:connections := ent:connections.defaultsTo([]).append(c);
+      ent:pending_conn := ent:pending_conn.splice(index,1)
     }
   }
 //
