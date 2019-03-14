@@ -46,7 +46,7 @@ ruleset org.sovrin.agent_message {
     connInviteMap = function(id,label,key,endpoint){
       {
         "@type": t_conn_invit,
-        "@id": id || random:uuid(),
+        //"@id": id || random:uuid(),
         "label": label || vp:dname(),
         "recipientKeys": [key],
         "serviceEndpoint": endpoint

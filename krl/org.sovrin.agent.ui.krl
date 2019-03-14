@@ -54,6 +54,8 @@ and paste it into your app.</p>
 a secure message-passing connection.
 Or, just have them use their Pico Agent App to scan the QR Code above.</p>
 >>
+        + <<<p style="padding-top:30em"><a href="http://picolabs.io">Powered by Pico Labs</a></p>
+>>
         + html:footer()
     }
   }
