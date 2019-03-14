@@ -13,7 +13,7 @@ ruleset org.sovrin.agent.ui {
       ]
     }
     invite = function(map){
-      <<<pre>
+      <<<pre class="no-print">
 <script type="text/javascript">document.write(JSON.stringify(#{map},null,2))</script>
 </pre>
 >>
@@ -27,10 +27,21 @@ $(function(){
   $("div").qrcode({ text: location.href, foreground: "#000000" });
 });
 </script>
+<style type="text/css">
+@media print {
+  .no-print {
+    display: none;
+  }
+  a {
+    text-decoration: none;
+    color: black;
+  }
+}
+</style>
 >>
     explain = function(owner){
       <<<p>You are looking at an invitation from #{owner}.
-(wait, <a href="#confusion"><em>I'm</em> #{owner}!</a>)</p>
+<span class="no-print">(wait, <a href="#confusion"><em>I'm</em> #{owner}!</a>)</span></p>
 <p>You received this invitation because #{owner} wants to have a
 secure message connection with you.
 To accept the invitation, you must have the <em>Pico Agent App</em>
@@ -46,15 +57,15 @@ and paste it into your app.</p>
       html:header("invitation", scripts) + explain(owner)
         + <<<div style="border:1px dashed silver;padding:5px;width:max-content"></div>
 >>
-        + <<<p>Technical details:</p>
+        + <<<p class="no-print">Technical details:</p>
 >>
         + invite(map)
-        + <<<a name="confusion"><p>You're #{owner}:</p></a>
-<p>You'll need to give this URL to the person with whom you want
+        + <<<a name="confusion"><p class="no-print">You're #{owner}:</p></a>
+<p class="no-print">You'll need to give this URL to the person with whom you want
 a secure message-passing connection.
 Or, just have them use their Pico Agent App to scan the QR Code above.</p>
 >>
-        + <<<p style="padding-top:30em"><a href="http://picolabs.io">Powered by Pico Labs</a></p>
+        + <<<p class="no-print" style="padding-top:30em"><a href="http://picolabs.io">Powered by Pico Labs</a></p>
 >>
         + html:footer()
     }
