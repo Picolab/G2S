@@ -16,9 +16,7 @@ ruleset org.sovrin.agent {
       wrangler:channel("agent")
     }
     connection = function(key){
-      ent:connections.defaultsTo([])
-        .filter(function(c){c{"their_vk"}==key})
-        .head()
+      ent:connections{key}
     }
     ui = function(){
       {
@@ -170,6 +168,7 @@ rule handle_connections_request {
       connection = msg{"connection"}.klog("connection")
       publicKeys = connection{["DIDDoc","publicKey"]}
         .map(function(x){x{"publicKeyBase58"}}).klog("publicKeys")
+      their_vk = publicKeys.head()
       se = connection{["DIDDoc","service"]}.head(){"serviceEndpoint"}.klog("se")
       chann = agent_Rx()
       my_did = chann{"id"}.klog("my_did")
@@ -183,12 +182,12 @@ rule handle_connections_request {
         "label": msg{"label"},
         "my_did": my_did,
         "their_did": connection{"DID"},
-        "their_vk": publicKeys.head(),
+        "their_vk": their_vk,
         "their_endpoint": se
       }.klog("c")
     }
     fired {
-      ent:connections := ent:connections.defaultsTo([]).append(c);
+      ent:connections{their_vk} := c;
       ent:connRes := ent:connRes.defaultsTo(0) + 1;
       raise wrangler event "new_child_request" attributes {
         "name": "connRes" + ent:connRes, "rids": "org.sovrin.wire_message",
@@ -211,6 +210,7 @@ rule handle_connections_request {
         .filter(function(x){x{"type"}=="IndyAgent"})
         .head()
         .klog("service")
+      their_vk = service{"recipientKeys"}.head()
       cid = verified{["~thread","thid"]}
         .klog("cid")
       index = ent:pending_conn.defaultsTo([])
@@ -219,20 +219,18 @@ rule handle_connections_request {
           a<0 && p{"@id"}==cid => i | a
         },-1)
         .klog("index")
-        .defaultsTo(ent:pending_conn.head(){"@id"}==cid => 0 | -1)
-        .klog("index")
       c = index < 0 => null | ent:pending_conn[index]
         .delete("@id")
         .put({
           "their_did": connection{"DID"},
-          "their_vk": service{"recipientKeys"}.head(),
+          "their_vk": their_vk,
           "their_endpoint": service{"serviceEndpoint"}
         })
         .klog("c")
     }
     if typeof(index) == "Number" && index >= 0 then noop()
     fired {
-      ent:connections := ent:connections.defaultsTo([]).append(c);
+      ent:connections{their_vk} := c;
       ent:pending_conn := ent:pending_conn.splice(index,1)
     }
   }
@@ -317,15 +315,12 @@ rule handle_connections_request {
     pre {
       my_did = meta:eci
       their_vk = event:attr("their_vk")
-      index = ent:connections.defaultsTo([])
-        .reduce(function(a,c,i){
-          a<0 && c{"my_did"}==my_did && c{"their_vk"}==their_vk => i | a
-        },-1)
+      pairwise = ent:connections{their_vk}
     }
-    if index >= 0 && index < ent:connections.length() then
-      send_directive("delete",{"index":index})
+    if pairwise{"my_did"} == meta:eci then
+      send_directive("delete",{"connection":pairwise})
     fired {
-      ent:connections := ent:connections.splice(index,1)
+      ent:connections := ent:connections.delete(their_vk)
     }
   }
 }
