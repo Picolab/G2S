@@ -19,9 +19,14 @@ ruleset org.sovrin.agent {
       ent:connections{key}
     }
     ui = function(){
+      connections = ent:connections
+        .values()
+        .sort(function(a,b){
+          a{"created"} cmp b{"created"}
+        });
       {
         "name": wrangler:name(),
-        "connections": ent:connections,
+        "connections": connections.length() => connections | null,
         "invitation": invitation()
       }
     }
@@ -179,6 +184,7 @@ rule handle_connections_request {
       pm = indy:pack(rm.encode(),publicKeys,meta:eci)
         .klog("packed message")
       c = {
+        "created": time:now(),
         "label": msg{"label"},
         "my_did": my_did,
         "their_did": connection{"DID"},
@@ -222,6 +228,7 @@ rule handle_connections_request {
       c = index < 0 => null | ent:pending_conn[index]
         .delete("@id")
         .put({
+          "created": time:now(),
           "their_did": connection{"DID"},
           "their_vk": their_vk,
           "their_endpoint": service{"serviceEndpoint"}
