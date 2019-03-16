@@ -39,3 +39,14 @@ and click on its Agent tab.
 There you will see "To be an agent, install the org.sovrin.agent rulesets".
 Click on the "install" link.
 Your new pico is now a Pico Agent.
+
+## Pico Agent with ngrok
+After installing ngrok, start ngrok with http requests being directed to port 8080.
+```
+./ngrok http 8080 
+```
+In a different terminal start the pico-engine with the host pointed to the domain provided from starting ngrok. 
+For example.
+```
+PICO_ENGINE_HOST=https://e28640da.ngrok.io npm start
+```
