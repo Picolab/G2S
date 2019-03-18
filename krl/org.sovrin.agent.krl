@@ -232,20 +232,13 @@ rule on_installation {
       msg = event:attr("message")
       rm =a_msg:trustPingResMap(msg{"@id"})
       their_key = event:attr("sender_key")
-      pm = indy:pack(rm.encode(),[their_key],meta:eci)
-      se = connection(their_key){"their_endpoint"}
+      conn = connection(their_key)
+      pm = indy:pack(rm.encode(),[their_key],conn{"my_did"})
+      se = conn{"their_endpoint"}
       may_respond = msg{"response_requested"} == false => false | true
     }
-    if se && may_respond then http:post(se,body=pm) setting(http_response)
-    fired {
-/*
-      ent:pingRes := ent:pingRes.defaultsTo(0) + 1;
-      raise wrangler event "new_child_request" attributes {
-        "name": "pingRes" + ent:pingRes, "rids": "org.sovrin.wire_message",
-        "serviceEndpoint": se, "packedMessage": pm
-      }
-*/
-    }
+    if se && may_respond then
+      http:post(se,body=pm) setting(http_response)
   }
 //
 // trust_ping/ping_response
@@ -336,7 +329,7 @@ rule on_installation {
     fired {
       ent:connections := ent:connections.delete(their_vk);
       raise wrangler event "channel_deletion_requested" attributes {
-        "eci": meta:eci
+        "eci": my_did
       }
     }
   }
