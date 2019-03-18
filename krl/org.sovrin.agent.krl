@@ -142,8 +142,22 @@ rule on_installation {
 //
 // connections/request
 //
-rule handle_connections_request {
+  rule handle_connections_request {
     select when sovrin connections_request
+    pre {
+      msg = event:attr("message")
+      their_label = msg{"label"}
+    }
+    if their_label then
+      wrangler:createChannel(meta:picoId,their_label,"connection")
+        setting(channel)
+    fired {
+      raise sovrin event "connections_request_accepted"
+        attributes { "message": msg, "channel": channel }
+    }
+  }
+  rule initiate_connections_response {
+    select when sovrin connections_request_accepted
     pre {
       msg = event:attr("message")
       req_id = msg{"@id"}
@@ -152,7 +166,7 @@ rule handle_connections_request {
         .map(function(x){x{"publicKeyBase58"}})
       their_vk = publicKeys.head()
       se = connection{["DIDDoc","service"]}.head(){"serviceEndpoint"}
-      chann = ent:invitation_channel
+      chann = event:attr("channel")
       my_did = chann{"id"}
       my_vk = chann{["sovrin","indyPublic"]}
       endpoint = sEp(my_did)
