@@ -133,30 +133,6 @@ rule on_installation {
     }
   }
 //
-// basicmessage/message
-//
-  rule handle_basicmessage_message {
-    select when sovrin basicmessage_message
-    pre {
-      msg = event:attr("message")
-      expected_reply = msg{"content"}
-        .extract(re#Reply with: (.+)#)
-        .head()
-      bm = a_msg:basicMsgMap(expected_reply)
-      their_key = event:attr("sender_key")
-      pm = indy:pack(bm.encode(),[their_key],meta:eci)
-      se = connection(their_key){"their_endpoint"}
-    }
-    if expected_reply && se then noop()
-    fired {
-      ent:basicMsg := ent:basicMsg.defaultsTo(0) + 1;
-      raise wrangler event "new_child_request" attributes {
-        "name": "basicMsg" + ent:basicMsg, "rids": "org.sovrin.wire_message",
-        "serviceEndpoint": se, "packedMessage": pm
-      }
-    }
-  }
-//
 // connections/request
 //
 rule handle_connections_request {
@@ -281,19 +257,47 @@ rule handle_connections_request {
     }
   }
 //
+// basicmessage/message
+//
+  rule handle_basicmessage_message {
+    select when sovrin basicmessage_message
+    pre {
+      their_key = event:attr("sender_key")
+      conn = connection(their_key)
+      msg = event:attr("message")
+      wmsg = conn.put(
+        "messages",
+        conn{"messages"}.defaultsTo([])
+          .append(msg.put("from","incoming"))
+      )
+    }
+    fired {
+      ent:connections{their_key} := wmsg
+    }
+  }
+//
 // initiate basicmessage
 //
   rule initiate_basicmessage {
     select when sovrin send_basicmessage
     pre {
       their_key = event:attr("their_vk")
+      conn = connection(their_key)
       content = event:attr("content")
       bm = a_msg:basicMsgMap(content)
       pm = indy:pack(bm.encode(),[their_key],agent_Rx(){"id"})
-      se = connection(their_key){"their_endpoint"}
+      se = conn{"their_endpoint"}
+      wmsg = conn.put(
+        "messages",
+        conn{"messages"}.defaultsTo([])
+          .append(bm.put("from","outgoing"))
+      )
     }
     if se then
       http:post(se,body=pm) setting(http_response)
+    fired {
+      ent:connections{their_key} := wmsg
+    }
   }
 //
 // convenience rule to clean up known expired connection
