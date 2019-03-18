@@ -67,6 +67,18 @@ rule on_installation {
         .map(function(x){x[0][1]})
       c_i = args{"c_i"}
       im = math:base64decode(c_i).decode()
+    }
+    fired {
+      raise sovrin event "invitation_accepted" attributes { "invitation": im }
+    }
+  }
+//
+// initiate connections request
+//
+  rule initiate_connection_request {
+    select when sovrin invitation_accepted
+    pre {
+      im = event:attr("invitation")
       chann = ent:invitation_channel
       my_did = chann{"id"}
       my_vk = chann{["sovrin","indyPublic"]}
