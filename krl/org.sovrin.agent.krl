@@ -2,18 +2,14 @@ ruleset org.sovrin.agent {
   meta {
     use module org.sovrin.agent_message alias a_msg
     use module io.picolabs.wrangler alias wrangler
-    shares __testing, agent_Rx, ui
+    shares __testing, ui
   }
   global {
     __testing = { "queries":
       [ { "name": "__testing" }
-      , { "name": "agent_Rx" }
       ] , "events":
-      [ { "domain": "sovrin", "type": "send_basicmessage", "attrs": [ "their_vk", "content" ] }
+      [ 
       ]
-    }
-    agent_Rx = function(){
-      wrangler:channel("agent")
     }
     connection = function(key){
       ent:connections{key}
@@ -36,7 +32,7 @@ ruleset org.sovrin.agent {
       <<#{meta:host}/sky/event/#{eci}/#{eid}/#{d}/#{t}>>
     }
     invitation = function(){
-      uKR = agent_Rx();
+      uKR = ent:invitation_channel;
       eci = uKR{"id"};
       im = a_msg:connInviteMap(
         ent:label,
@@ -53,15 +49,9 @@ ruleset org.sovrin.agent {
 //
 rule on_installation {
   select when wrangler ruleset_added where event:attr("rids") >< meta:rid
-  pre {
-    have_channel = agent_Rx()
-  }
-  if not have_channel then
-    wrangler:createChannel(meta:picoId,"agent","sovrin") setting(channel)
+  wrangler:createChannel(meta:picoId,"agent","sovrin") setting(channel)
   fired {
     ent:invitation_channel := channel
-  } else {
-    ent:invitation_channel := have_channel
   }
 }
 //
@@ -77,7 +67,7 @@ rule on_installation {
         .map(function(x){x[0][1]})
       c_i = args{"c_i"}
       im = math:base64decode(c_i).decode()
-      chann = agent_Rx()
+      chann = ent:invitation_channel
       my_did = chann{"id"}
       my_vk = chann{["sovrin","indyPublic"]}
       rm = a_msg:connReqMap(
@@ -145,7 +135,7 @@ rule handle_connections_request {
         .map(function(x){x{"publicKeyBase58"}})
       their_vk = publicKeys.head()
       se = connection{["DIDDoc","service"]}.head(){"serviceEndpoint"}
-      chann = agent_Rx()
+      chann = ent:invitation_channel
       my_did = chann{"id"}
       my_vk = chann{["sovrin","indyPublic"]}
       endpoint = sEp(my_did)
@@ -243,7 +233,7 @@ rule handle_connections_request {
       pm = indy:pack(
         rm.encode(),
         [their_vk],
-        agent_Rx(){"id"}
+        ent:invitation_channel{"id"}
       )
       se = connection(their_vk){"their_endpoint"}
     }
@@ -285,7 +275,7 @@ rule handle_connections_request {
       conn = connection(their_key)
       content = event:attr("content")
       bm = a_msg:basicMsgMap(content)
-      pm = indy:pack(bm.encode(),[their_key],agent_Rx(){"id"})
+      pm = indy:pack(bm.encode(),[their_key],ent:invitation_channel{"id"})
       se = conn{"their_endpoint"}
       wmsg = conn.put(
         "messages",
