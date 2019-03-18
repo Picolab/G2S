@@ -260,13 +260,14 @@ rule on_installation {
     select when sovrin trust_ping_requested
     pre {
       their_vk = event:attr("their_vk")
+      conn = connection(their_vk)
       rm = a_msg:trustPingMap()
       pm = indy:pack(
         rm.encode(),
         [their_vk],
-        ent:invitation_channel{"id"}
+        conn{"my_did"}
       )
-      se = connection(their_vk){"their_endpoint"}
+      se = conn{"their_endpoint"}
     }
     if se then noop()
     fired {
@@ -306,7 +307,7 @@ rule on_installation {
       conn = connection(their_key)
       content = event:attr("content")
       bm = a_msg:basicMsgMap(content)
-      pm = indy:pack(bm.encode(),[their_key],ent:invitation_channel{"id"})
+      pm = indy:pack(bm.encode(),[their_key],conn{"my_did"})
       se = conn{"their_endpoint"}
       wmsg = conn.put(
         "messages",
@@ -337,7 +338,6 @@ rule on_installation {
       raise wrangler event "channel_deletion_requested" attributes {
         "eci": meta:eci
       }
-      if meta:eci != ent:invitation_channel{"id"}
     }
   }
 }
