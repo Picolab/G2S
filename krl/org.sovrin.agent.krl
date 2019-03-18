@@ -67,9 +67,14 @@ rule on_installation {
         .map(function(x){x[0][1]})
       c_i = args{"c_i"}
       im = math:base64decode(c_i).decode()
+      their_label = im{"label"}
     }
+    if im && their_label then
+      wrangler:createChannel(meta:picoId,their_label,"connection")
+        setting(channel)
     fired {
-      raise sovrin event "invitation_accepted" attributes { "invitation": im }
+      raise sovrin event "invitation_accepted"
+        attributes { "invitation": im, "channel": channel }
     }
   }
 //
@@ -79,7 +84,7 @@ rule on_installation {
     select when sovrin invitation_accepted
     pre {
       im = event:attr("invitation")
-      chann = ent:invitation_channel
+      chann = event:attr("channel")
       my_did = chann{"id"}
       my_vk = chann{["sovrin","indyPublic"]}
       rm = a_msg:connReqMap(
@@ -314,7 +319,11 @@ rule handle_connections_request {
     if pairwise{"my_did"} == meta:eci then
       send_directive("delete",{"connection":pairwise})
     fired {
-      ent:connections := ent:connections.delete(their_vk)
+      ent:connections := ent:connections.delete(their_vk);
+      raise wrangler event "channel_deletion_requested" attributes {
+        "eci": meta:eci
+      }
+      if meta:eci != ent:invitation_channel{"id"}
     }
   }
 }
