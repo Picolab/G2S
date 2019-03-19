@@ -12,9 +12,6 @@ ruleset org.sovrin.agent {
       [ 
       ]
     }
-    connection = function(key){
-      ent:connections{key}
-    }
     ui = function(){
       connections = ent:connections
         .values()
@@ -233,7 +230,7 @@ rule on_installation {
       msg = event:attr("message")
       rm =a_msg:trustPingResMap(msg{"@id"})
       their_key = event:attr("sender_key")
-      conn = connection(their_key)
+      conn = ent:connections{their_key}
       pm = indy:pack(rm.encode(),[their_key],conn{"my_did"})
       se = conn{"their_endpoint"}
       may_respond = msg{"response_requested"} == false => false | true
@@ -254,7 +251,7 @@ rule on_installation {
     select when sovrin trust_ping_requested
     pre {
       their_vk = event:attr("their_vk")
-      conn = connection(their_vk)
+      conn = ent:connections{their_vk}
       rm = a_msg:trustPingMap()
       pm = indy:pack(
         rm.encode(),
@@ -279,7 +276,7 @@ rule on_installation {
     select when sovrin basicmessage_message
     pre {
       their_key = event:attr("sender_key")
-      conn = connection(their_key)
+      conn = ent:connections{their_key}
       msg = event:attr("message")
       wmsg = conn.put(
         "messages",
@@ -298,7 +295,7 @@ rule on_installation {
     select when sovrin send_basicmessage
     pre {
       their_key = event:attr("their_vk")
-      conn = connection(their_key)
+      conn = ent:connections{their_key}
       content = event:attr("content")
       bm = a_msg:basicMsgMap(content)
       pm = indy:pack(bm.encode(),[their_key],conn{"my_did"})
