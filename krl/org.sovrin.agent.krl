@@ -2,6 +2,7 @@ ruleset org.sovrin.agent {
   meta {
     use module org.sovrin.agent_message alias a_msg
     use module io.picolabs.wrangler alias wrangler
+    use module io.picolabs.visual_params alias vp
     shares __testing, ui
   }
   global {
@@ -305,7 +306,9 @@ rule on_installation {
       wmsg = conn.put(
         "messages",
         conn{"messages"}.defaultsTo([])
-          .append(bm.put("from","outgoing"))
+          .append(bm.put("from","outgoing")
+                    .put("color",vp:colorRGB().join(","))
+                 )
       )
     }
     if se then
