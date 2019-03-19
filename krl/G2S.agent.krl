@@ -1,8 +1,8 @@
 ruleset G2S.agent {
   meta {
-    shares __testing, ephemeralDids, dids,credentialDefinition,connections,dump,
+    shares __testing, ephemeralDids, dids,credentialDefinition,connections,
       credentialDefinitions,credentialOffer,createLinkSecret,linkSecretId,getNym,nymRequests,credentialRequest,createCredential,proofRequest
-    provides ephemeralDids, dids,credentialDefinition,credentialDefinitions,connections,dump,
+    provides ephemeralDids, dids,credentialDefinition,credentialDefinitions,connections,
       credentialOffer,createLinkSecret,linkSecretId,getNym,nymRequests,credentialRequest,createCredential,proofRequest
     //provides
     use module G2S.indy_sdk.wallet alias wallet_module
@@ -33,7 +33,7 @@ ruleset G2S.agent {
         { "name": "getNym","args":["submitterDid","targetDid"] },{"name":"createCredential","args":["credOffer", "credReq", "credValues", "revRegId", "blobStorageReaderHandle"]},
         {"name":"storeCredential","args":["credId", "credReqMetadata", "cred", "credDef", "revRegDef"]},
         {"name":"proofRequest","args":[ "name", "version", "requested_attributes", "requested_predicates"]},
-        {"name": "connections", "args":[]},{"name":"nymRequests","args":[]}, {"name":"dump","args":[]}
+        {"name": "connections", "args":[]},{"name":"nymRequests","args":[]}
       //, { "name": "entry", "args": [ "key" ] }
       ] , "events":
       [ //{ "domain": "agent", "type": "create_ephemeral_did" },
@@ -46,25 +46,6 @@ ruleset G2S.agent {
                                                         "role"] }
       , { "domain": "agent", "type": "create_secret"}, { "domain": "agent", "type": "connect","attrs":["destination_did"]}
       ]
-    }
-    dump = function(){
-      {     "single_use_dids"     :ent:single_use_dids ,// todo: remove this ....
-            "secret_id"           :ent:secret_id,
-            "sent_nym_requests"   :ent:sent_nym_requests ,
-            "nym_requests"        :ent:nym_requests ,
-            " ent:anchored_nym "  :ent:anchored_nym ,
-            "sent_cred_offers"    :ent:sent_cred_offers ,
-            "sent_cred_request"   :ent:sent_cred_request ,
-            "cred_offers"         :ent:cred_offers ,
-            "sent_cred_request"   :ent:sent_cred_request ,
-            "cred_requests"       :ent:cred_requests ,
-            "sent_cred"           :ent:sent_cred ,
-            "creds"               :ent:creds ,
-            "sent_proof_requests" :ent:sent_proof_requests,
-            "proof_requests"      :ent:proof_requests,
-            "proof_offer"         :ent:proof_offer
-        
-      }
     }
     id = function(){
       wrangler:myself(){"id"}
@@ -225,18 +206,13 @@ ruleset G2S.agent {
       closeWalletFun(handle);
       results
     }
-    searchForCredentialRequest = function(query,proofReq, attr_count,pred_count,//TODO: split up for user input and refactor code to be in krl.....
-                                          schemaSubmitterDid, schemaId , credDefSubmitterDid, credDefId){
+    searchForCredentialRequest = function(query){
       handle = openWalletFun();
-      schemasCred_defsRevoc_statesCreds_for_proof = ledger_module:searchCredWithReqForProof(pool_module:handle(),handle,query,attr_count,pred_count,schemaSubmitterDid, schemaId , credDefSubmitterDid, credDefId);
-      results = wallet_module:proverCreateProof(handle, proofReq, schemasCred_defsRevoc_statesCreds_for_proof[3] , ent:secret_id
-                                                                , schemasCred_defsRevoc_statesCreds_for_proof[0]
-                                                                , schemasCred_defsRevoc_statesCreds_for_proof[1]
-                                                                , schemasCred_defsRevoc_statesCreds_for_proof[2] );
+      results = ledger_module:searchCredWithReq(handle,query);
       closeWalletFun(handle);
       results
     }
-
+    
     initiate_subscription = defaction(eci,Rx_role, Tx_role ) {
       event:send({
         "eci": eci,
@@ -277,18 +253,9 @@ ruleset G2S.agent {
       ent:secret_id:= secretId;
       ent:sent_nym_requests := {};
       ent:nym_requests := {};
-      ent:anchored_nym := {};
       ent:sent_cred_offers := {};
       ent:sent_cred_request := {};
       ent:cred_offers := {};
-      ent:sent_cred_request := {};
-      ent:cred_requests := {};
-      ent:sent_cred := {};
-      ent:creds := {};
-      ent:sent_proof_requests:= {};
-      ent:proof_requests := {};
-      ent:sent_proofs := {};
-      ent:proof_offer := {};
       raise wrangler event "autoAcceptConfigUpdate"
         attributes {"variable"    : "Tx_Rx_Type",
                     "regex_str"   : "Indy" };
@@ -388,7 +355,7 @@ ruleset G2S.agent {
     select when agent send_credential_offer
     pre{
       id = random:uuid();
-      offer = {"offer":credentialOffer(event:attr("cred_def_id").klog("cred_def_id")),"id":id};
+      offer = {"offer":credentialOffer(event:attr("cred_def_id")),"id":id};
       tx = subscription:established("Id",event:attr("sid"))[0]{"Tx"};
     }if(tx)then every{
       event:send({
@@ -436,21 +403,18 @@ ruleset G2S.agent {
     select when agent cred_request
       send_directive("sent_offer", event:attrs);
     always{
-      ent:cred_requests := ent:cred_requests.put(event:attr("id"),event:attr("request")).klog("cred_requests")
+      ent:cred_requests := ent:cred_requests.put(event:attr("id"),event:attr("request"))
     }
   }
   
   rule issueCredentialFromRequest {
     select when agent issue_credential_from_request
     pre{
-      id = random:uuid();//.klog("sent_cred_id");
-      attribute_object = event:attr("credAttributes").decode().map(function(value,key){ // this will need to be changed to support other agency credentials ..... 
-                                                                                encoded = (value.as("Number").isnull()) =>  anoncred:hexToDec(math:hash("md5", value)) | value ;
-                                                                                 {"raw": value,"encoded": encoded }})
+      id = random:uuid();
       tx = subscription:established("Id",event:attr("sid"))[0]{"Tx"};
-      credential = {"id":id,"cred": createCredential(ent:sent_cred_offers{event:attr("offerId")},
-                                                     ent:cred_requests{event:attr("requestId")}[0], //TODO: figure out why this is an array.
-                                                     attribute_object,
+      credential = {"id":id,"cred": createCredential(ent:cred_offers  {event:attr("offerId")},
+                                                     ent:cred_requests{event:attr("requestId")}, 
+                                                     event:attr("credAttributes"), //TODO, build raw and encoding object down the pipline
                                                      event:attr("revRegId"), 
                                                      event:attr("blobStorageReaderHandle"))}
     }if(tx)then every{
@@ -465,7 +429,7 @@ ruleset G2S.agent {
       ent:sent_cred := ent:sent_cred.put(id,credential{"cred"})
     }
   }
-      
+  
   rule acceptCredential {
     select when agent accept_cred
       send_directive("accepting_cred", event:attrs);
@@ -473,74 +437,8 @@ ruleset G2S.agent {
       ent:creds := ent:creds.put(event:attr("id"),event:attr("cred"))
     }
   }
-  
-  rule sendProofRequest {
-    select when agent send_proof_request
-    pre{
-        id = random:uuid();
-        tx = subscription:established("Id",event:attr("sid"))[0]{"Tx"}.klog("tx in send proof request");
-        proof_request = {"id":id, "request":{
-        "nonce" : event:attr("nonce").defaultsTo(random:integer(upper = 1000000000000000000000000, 
-                                                                lower = 9999999999999999999999999)),
-        "name" : event:attr("name"),
-        "version" : event:attr("version"),
-        "requested_attributes" : event:attr("requested_attributes").decode(),
-        "requested_predicates" : event:attr("requested_predicates").decode()
-        }};// TODO add revocation support...
-    }if(tx)then every{
-      event:send({
-          "eci": tx,
-          "domain": "agent", "type": "recieve_proof_request",
-          "attrs": proof_request
-        })
-      send_directive("sent_proof_request", event:attrs);
-    }
-    always{
-      ent:sent_proof_requests := ent:sent_proof_requests.put(id,proof_request{"request"})
-    }
-  }
-  
-  rule storeProofRequest {
-    select when agent recieve_proof_request
-      send_directive("storing_proof_request", event:attrs);
-    always{
-      ent:proof_requests := ent:proof_requests.put(event:attr("id"),event:attr("request"))
-    }
-  }
-  
-  rule sendProofForRequest {
-    select when agent send_proof_for_request
-    pre{
-      id = random:uuid();
-      request = ent:proof_requests{event:attr("proofRequestId")}.klog("proof request");
-      tx = subscription:established("Id",event:attr("sid"))[0]{"Tx"};
-      proof = {"id":id,"proof":searchForCredentialRequest(query,request, event:attr("attrCount").defaultsTo(10),
-                                                          event:attr("predCount").defaultsTo(10),event:attr("schemaSubmitterDid"), 
-                                                          event:attr("schemaId") , event:attr("credDefSubmitterDid"), event:attr("credDefId"))}.klog("proof")
-    }if(tx)then every{
-      event:send({
-          "eci": tx,
-          "domain": "agent", "type": "proof_offer",
-          "attrs": proof
-        })
-      send_directive("sent_proof", proof);
-    }
-    always{
-      ent:sent_proofs := ent:sent_proofs.put(id,proof{"proof"})
-    }
-  }
-  
-  rule storeProofOffer {
-    select when agent proof_offer
-    pre{
-    
-    }
-      send_directive("storing_proof_offer", event:attrs);
-    always{
-      ent:proof_offer := ent:proof_offer.put(event:attr("id"),event:attr("proof"))
-    }
-  }
-  
+  // proof request
+  //
   rule nym {
     select when agent nym
     newNym(event:attr("signing_did"),
@@ -608,7 +506,6 @@ ruleset G2S.agent {
         )
     fired{
       ent:nym_requests := ent:nym_requests.delete([event:attr("nym_request_id")]); // remove request
-      ent:anchored_nym := ent:anchored_nym.put(event:attr("signing_did")+":"+request{"anchoring_did"},request)
     }
   }
   rule linkSecret {// Todo, add directives.
