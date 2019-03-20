@@ -1,5 +1,6 @@
 ruleset org.sovrin.agent {
   meta {
+    use module org.sovrin.wire_message alias wire
     use module org.sovrin.agent_message alias a_msg
     use module io.picolabs.wrangler alias wrangler
     use module io.picolabs.visual_params alias vp
@@ -309,8 +310,9 @@ rule on_installation {
       )
     }
     if se then
-      http:post(se,body=pm) setting(http_response)
+      wire:sendMessage(se,pm) setting(http_response)
     fired {
+      ent:last_http_response := http_response;
       ent:connections{their_key} := wmsg
     }
   }

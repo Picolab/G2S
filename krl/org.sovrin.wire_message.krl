@@ -1,6 +1,7 @@
 ruleset org.sovrin.wire_message {
   meta {
     use module io.picolabs.wrangler alias wrangler
+    provides sendMessage
     shares __testing
   }
   global {
@@ -11,6 +12,14 @@ ruleset org.sovrin.wire_message {
       [ //{ "domain": "d1", "type": "t1" }
       //, { "domain": "d2", "type": "t2", "attrs": [ "a1", "a2" ] }
       ]
+    }
+    sendMessage = defaction(se,pm){
+      http:post(
+        se,
+        body=pm,
+        headers={"content-type":"application/ssi-agent-wire"}
+      ) setting(http_response)
+      returns http_response
     }
   }
 //
@@ -39,11 +48,7 @@ rule on_installation {
       se = event:attr("serviceEndpoint")
       pm = event:attr("packedMessage")
     }
-    http:post(
-      se,
-      body=pm,
-      headers={"content-type":"application/ssi-agent-wire"}
-    ) setting(http_response)
+    sendMessage(se,pm) setting(http_response)
     fired {
       ent:last_http_response := http_response;
       klog(http_response,"http_response");
