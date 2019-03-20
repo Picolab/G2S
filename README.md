@@ -32,7 +32,8 @@ The ruleset editor is at `http://localhost:8080/ruleset.html` and look for
 a box labelled "raw source URL" into which you will paste each of the above URLs,
 then click the button labelled "register url" to perform the registration.
 
-You might wish to use [this page](https://picolab.github.io/G2S/rids.html)and click on
+You might wish to use [this page](https://picolab.github.io/G2S/rids.html)
+and click on
 the links in order from top to bottom to register these rulesets.
 
 ## Creating a Pico Agent
