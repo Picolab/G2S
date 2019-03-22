@@ -1,6 +1,5 @@
 ruleset org.sovrin.agent {
   meta {
-    use module org.sovrin.wire_message alias wire
     use module org.sovrin.agent_message alias a_msg
     use module io.picolabs.wrangler alias wrangler
     use module io.picolabs.visual_params alias vp
@@ -54,6 +53,28 @@ rule on_installation {
   }
 }
 //
+// send ssi_agent_wire message
+//
+  rule send_ssi_agent_wire_message {
+    select when sovrin new_ssi_agent_wire_message
+    pre {
+      se = event:attr("serviceEndpoint")
+      pm = event:attr("packedMessage")
+    }
+    http:post(
+      se,
+      body=pm,
+      headers={"content-type":"application/ssi-agent-wire"},
+      autosend = {"eci": meta:eci, "domain": "http", "type": "post"}
+    )
+  }
+  rule save_last_http_response {
+    select when http post
+    fired {
+      ent:last_http_response := event:attrs
+    }
+  }
+//
 // accept invitation
 //
   rule accept_invitation {
@@ -106,9 +127,7 @@ rule on_installation {
     }
     fired {
       ent:pending_conn := ent:pending_conn.defaultsTo([]).append(pc);
-      ent:connReq := ent:connReq.defaultsTo(0) + 1;
-      raise wrangler event "new_child_request" attributes {
-        "name": "connReq" + ent:connReq, "rids": "org.sovrin.wire_message",
+      raise sovrin event "new_ssi_agent_wire_message" attributes {
         "serviceEndpoint": reqURL, "packedMessage": packedBody
       }
     }
@@ -182,9 +201,7 @@ rule on_installation {
     }
     fired {
       raise agent event "new_connection" attributes c;
-      ent:connRes := ent:connRes.defaultsTo(0) + 1;
-      raise wrangler event "new_child_request" attributes {
-        "name": "connRes" + ent:connRes, "rids": "org.sovrin.wire_message",
+      raise sovrin event "new_ssi_agent_wire_message" attributes {
         "serviceEndpoint": se, "packedMessage": pm
       }
     }
@@ -275,9 +292,7 @@ rule on_installation {
     }
     if se then noop()
     fired {
-      ent:pingReq := ent:pingReq.defaultsTo(0) + 1;
-      raise wrangler event "new_child_request" attributes {
-        "name": "pingReq" + ent:pingReq, "rids": "org.sovrin.wire_message",
+      raise sovrin event "new_ssi_agent_wire_message" attributes {
         "serviceEndpoint": se, "packedMessage": pm
       }
     }
@@ -321,10 +336,11 @@ rule on_installation {
                  )
       )
     }
-    if se then
-      wire:sendMessage(se,pm) setting(http_response)
+    if se then noop()
     fired {
-      ent:last_http_response := http_response;
+      raise sovrin event "new_ssi_agent_wire_message" attributes {
+        "serviceEndpoint": se, "packedMessage": pm
+      };
       ent:connections{their_key} := wmsg
     }
   }

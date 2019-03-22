@@ -24,7 +24,6 @@ Using the ruleset editor built-in to your pico engine, register these rulesets:
 https://raw.githubusercontent.com/Picolab/G2S/master/krl/html.krl
 https://raw.githubusercontent.com/Picolab/G2S/master/krl/org.sovrin.agent.ui.krl
 https://raw.githubusercontent.com/Picolab/G2S/master/krl/org.sovrin.agent_message.krl
-https://raw.githubusercontent.com/Picolab/G2S/master/krl/org.sovrin.wire_message.krl
 https://raw.githubusercontent.com/Picolab/G2S/master/krl/org.sovrin.agent.krl
 ```
 
