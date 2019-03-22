@@ -181,10 +181,7 @@ rule on_installation {
       }
     }
     fired {
-      raise agent event "new_connection" attributes {
-        "their_vk": their_vk,
-        "connection": c
-      };
+      raise agent event "new_connection" attributes c;
       ent:connRes := ent:connRes.defaultsTo(0) + 1;
       raise wrangler event "new_child_request" attributes {
         "name": "connRes" + ent:connRes, "rids": "org.sovrin.wire_message",
@@ -221,10 +218,7 @@ rule on_installation {
     }
     if typeof(index) == "Number" && index >= 0 then noop()
     fired {
-      raise agent event "new_connection" attributes {
-        "their_vk": their_vk,
-        "connection": c
-      };
+      raise agent event "new_connection" attributes c;
       ent:pending_conn := ent:pending_conn.splice(index,1)
     }
   }
@@ -235,10 +229,9 @@ rule on_installation {
     select when agent new_connection
     pre {
       their_vk = event:attr("their_vk")
-      conn = event:attr("connection")
     }
     fired {
-      ent:connections{their_vk} := conn
+      ent:connections{their_vk} := event:attrs
     }
   }
 //
