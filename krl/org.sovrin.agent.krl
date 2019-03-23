@@ -1,9 +1,10 @@
 ruleset org.sovrin.agent {
   meta {
     use module org.sovrin.agent_message alias a_msg
+    use module org.sovrin.agent.ui alias invite
     use module io.picolabs.wrangler alias wrangler
     use module io.picolabs.visual_params alias vp
-    shares __testing, ui
+    shares __testing, html, ui
   }
   global {
     __testing = { "queries":
@@ -11,6 +12,9 @@ ruleset org.sovrin.agent {
       ] , "events":
       [ 
       ]
+    }
+    html = function(c_i){
+      invite:html(c_i)
     }
     ui = function(){
       connections = ent:connections
@@ -38,7 +42,7 @@ ruleset org.sovrin.agent {
         uKR{["sovrin","indyPublic"]},
         sEp(eci)
       );
-      ep = <<#{meta:host}/sky/cloud/#{eci}/org.sovrin.agent.ui/html.html>>;
+      ep = <<#{meta:host}/sky/cloud/#{eci}/#{meta:rid}/html.html>>;
       ep + "?c_i=" + math:base64encode(im.encode())
     }
   }
