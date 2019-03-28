@@ -8,7 +8,7 @@ ruleset org.sovrin.agency {
       [ { "name": "__testing" }
       //, { "name": "entry", "args": [ "key" ] }
       ] , "events":
-      [ { "domain": "agency", "type": "new_agent", "attrs": [ "agent_name" ] }
+      [ { "domain": "agency", "type": "new_agent", "attrs": [ "name", "color", "label" ] }
       //, { "domain": "d2", "type": "t2", "attrs": [ "a1", "a2" ] }
       ]
     }
@@ -50,10 +50,9 @@ ruleset org.sovrin.agency {
   rule create_new_agent_pico {
     select when agency new_agent
     pre {
-      child_specs = {
-        "name": event:attr("agent_name"),
-        "subs_eci": ent:subs_eci
-      }
+      child_specs = event:attrs
+        .delete("_headers")
+        .put({ "subs_eci": ent:subs_eci })
     }
     every {
       event:send({"eci":wrangler:parent_eci(),

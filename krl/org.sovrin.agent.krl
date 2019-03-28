@@ -37,8 +37,8 @@ ruleset org.sovrin.agent {
       uKR = ent:invitation_channel;
       eci = uKR{"id"};
       im = a_msg:connInviteMap(
-        ent:label,
         null, // @id
+        ent:label,
         uKR{["sovrin","indyPublic"]},
         sEp(eci)
       );
@@ -51,9 +51,14 @@ ruleset org.sovrin.agent {
 //
 rule on_installation {
   select when wrangler ruleset_added where event:attr("rids") >< meta:rid
+  pre {
+    rs_attrs = event:attr("rs_attrs")
+    label = rs_attrs{"label"}
+  }
   wrangler:createChannel(meta:picoId,"agent","sovrin") setting(channel)
   fired {
-    ent:invitation_channel := channel
+    ent:invitation_channel := channel;
+    ent:label := label
   }
 }
 //
