@@ -4,6 +4,7 @@ ruleset org.sovrin.agent {
     use module org.sovrin.agent.ui alias invite
     use module io.picolabs.wrangler alias wrangler
     use module io.picolabs.visual_params alias vp
+    use module webfinger alias wf
     shares __testing, html, ui
   }
   global {
@@ -25,7 +26,8 @@ ruleset org.sovrin.agent {
       {
         "name": ent:label || wrangler:name(),
         "connections": connections.length() => connections | null,
-        "invitation": invitation()
+        "invitation": invitation(),
+        "wf": wf:webfinger(),
       }
     }
     sEp = function(eci,eid,e_d,e_t){
