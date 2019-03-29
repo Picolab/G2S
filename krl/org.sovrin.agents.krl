@@ -2,7 +2,6 @@ ruleset org.sovrin.agents {
   meta {
     use module io.picolabs.wrangler alias wrangler
     use module io.picolabs.collection alias agents
-      with Tx_role = "agent" Rx_role="agency"
     shares __testing, agents, agentByName
   }
   global {
