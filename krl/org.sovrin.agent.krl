@@ -23,7 +23,7 @@ ruleset org.sovrin.agent {
           a{"created"} cmp b{"created"}
         });
       {
-        "name": wrangler:name(),
+        "name": ent:label || wrangler:name(),
         "connections": connections.length() => connections | null,
         "invitation": invitation()
       }
