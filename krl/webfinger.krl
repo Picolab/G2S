@@ -15,6 +15,7 @@ ruleset webfinger {
     }
     blacklist = [
       "picolabs.io",
+      "windley.org",
     ]
     wfLink = function(jrd,rel){
       jrd.isnull() => null |
