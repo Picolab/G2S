@@ -27,7 +27,7 @@ ruleset org.sovrin.agent {
         "name": ent:label || wrangler:name(),
         "connections": connections.length() => connections | null,
         "invitation": invitation(),
-        "wf": wf:webfinger(),
+        "wf": ent:webfinger,
       }
     }
     sEp = function(eci,eid,e_d,e_t){
@@ -60,9 +60,17 @@ rule on_installation {
   wrangler:createChannel(meta:picoId,"agent","sovrin") setting(channel)
   fired {
     ent:invitation_channel := channel;
-    ent:label := label
+    ent:label := label;
+    schedule webfinger event "webfinger_needed"
+      at time:add(time:now(), {"seconds": 3})
   }
 }
+  rule webfinger_check {
+    select when webfinger webfinger_needed
+    fired {
+      ent:webfinger := wf:webfinger(wrangler:name())
+    }
+  }
 //
 // send ssi_agent_wire message
 //

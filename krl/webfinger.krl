@@ -1,6 +1,5 @@
 ruleset webfinger {
   meta {
-    use module io.picolabs.wrangler alias wrangler
     provides webfinger
     shares __testing
   }
@@ -13,10 +12,6 @@ ruleset webfinger {
       //, { "domain": "d2", "type": "t2", "attrs": [ "a1", "a2" ] }
       ]
     }
-    blacklist = [
-      "picolabs.io",
-      "windley.org",
-    ]
     wfLink = function(jrd,rel){
       jrd.isnull() => null |
       jrd{"links"}
@@ -34,10 +29,9 @@ ruleset webfinger {
       profile.isnull() && avatar.isnull() => null
         | { "avatar": avatar, "profile": profile }
     }
-    webfinger = function(){
-      resource = wrangler:name();
+    webfinger = function(resource){
       domain = resource.extract(re#^[^@]+@(.+)#).head();
-      domain.isnull() || blacklist >< domain => null
+      domain.isnull() => null
         | getWF(domain,resource)
     }
   }
