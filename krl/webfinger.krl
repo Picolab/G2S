@@ -27,7 +27,7 @@ ruleset webfinger {
       profile = wfLink(jrd,"http://webfinger.net/rel/profile-page");
       avatar = wfLink(jrd,"http://webfinger.net/rel/avatar");
       profile.isnull() && avatar.isnull() => null
-        | { "avatar": avatar, "profile": profile }
+        | { "photo": avatar, "url": profile }
     }
     webfinger = function(resource){
       domain = resource.extract(re#^[^@]+@(.+)#).head();

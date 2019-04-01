@@ -11,7 +11,7 @@ ruleset org.sovrin.agent {
     __testing = { "queries":
       [ { "name": "__testing" }
       ] , "events":
-      [ 
+      [ { "domain": "webfinger", "type": "webfinger_needed" }
       ]
     }
     html = function(c_i){
