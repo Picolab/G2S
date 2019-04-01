@@ -11,7 +11,7 @@ ruleset org.sovrin.agent {
     __testing = { "queries":
       [ { "name": "__testing" }
       ] , "events":
-      [ { "domain": "webfinger", "type": "webfinger_needed" }
+      [ { "domain": "webfinger", "type": "webfinger_wanted" }
       ]
     }
     html = function(c_i){
@@ -51,22 +51,20 @@ ruleset org.sovrin.agent {
 //
 // on ruleset_added
 //
-rule on_installation {
-  select when wrangler ruleset_added where event:attr("rids") >< meta:rid
-  pre {
-    rs_attrs = event:attr("rs_attrs")
-    label = rs_attrs{"label"}
+  rule on_installation {
+    select when wrangler ruleset_added where event:attr("rids") >< meta:rid
+    pre {
+      rs_attrs = event:attr("rs_attrs")
+      label = rs_attrs{"label"}
+    }
+    wrangler:createChannel(meta:picoId,"agent","sovrin") setting(channel)
+    fired {
+      ent:invitation_channel := channel;
+      ent:label := label
+    }
   }
-  wrangler:createChannel(meta:picoId,"agent","sovrin") setting(channel)
-  fired {
-    ent:invitation_channel := channel;
-    ent:label := label;
-    schedule webfinger event "webfinger_needed"
-      at time:add(time:now(), {"seconds": 3})
-  }
-}
   rule webfinger_check {
-    select when webfinger webfinger_needed
+    select when webfinger webfinger_wanted
     fired {
       ent:webfinger := wf:webfinger(wrangler:name())
     }
