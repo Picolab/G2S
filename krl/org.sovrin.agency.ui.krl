@@ -23,9 +23,10 @@ form:invalid button {
       <<<option value="#{c}">#{n}</option>
 >>
     }).values().join("")
-    html = function(){
-      html:header("New Agent",styles)
-        + <<<h1>New Agent</h1>
+    html = function(name){
+      html:header(name,styles)
+        + <<<h1>#{name}</h1>
+<h2>New Agent</h2>
 >>
         + <<<form action="/sky/event/#{meta:eci}/none/agency/new_agent">
 <input name="name" type="email" placeholder="email address" required>

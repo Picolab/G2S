@@ -13,8 +13,8 @@ ruleset org.sovrin.agency {
       //, { "domain": "d2", "type": "t2", "attrs": [ "a1", "a2" ] }
       ]
     }
-    html = function(){
-      ui:html()
+    html = function(name){
+      ui:html(name || "Agency")
     }
     agents_rids = [
       "io.picolabs.collection",
