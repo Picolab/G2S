@@ -53,6 +53,9 @@ ruleset org.sovrin.agency {
   }
   rule create_new_agent_pico {
     select when agency new_agent
+      name re#.+@.+[.].+#
+      color re#\#[0-9a-f]{6}#
+      label re#.+#
     pre {
       child_specs = event:attrs
         .delete("_headers")
