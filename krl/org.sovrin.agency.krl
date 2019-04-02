@@ -1,7 +1,8 @@
 ruleset org.sovrin.agency {
   meta {
     use module io.picolabs.wrangler alias wrangler
-    shares __testing
+    use module org.sovrin.agency.ui alias ui
+    shares __testing, html
   }
   global {
     __testing = { "queries":
@@ -11,6 +12,9 @@ ruleset org.sovrin.agency {
       [ { "domain": "agency", "type": "new_agent", "attrs": [ "name", "color", "label" ] }
       //, { "domain": "d2", "type": "t2", "attrs": [ "a1", "a2" ] }
       ]
+    }
+    html = function(){
+      ui:html()
     }
     agents_rids = [
       "io.picolabs.collection",
