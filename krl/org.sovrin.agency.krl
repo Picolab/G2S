@@ -1,5 +1,6 @@
 ruleset org.sovrin.agency {
   meta {
+    use module io.picolabs.visual_params alias vp
     use module io.picolabs.wrangler alias wrangler
     use module org.sovrin.agency.ui alias ui
     shares __testing, html
@@ -14,7 +15,7 @@ ruleset org.sovrin.agency {
       ]
     }
     html = function(name){
-      ui:html(name || "Agency")
+      ui:html(name || vp:dname() || "Agency")
     }
     agents_rids = [
       "io.picolabs.collection",
