@@ -55,4 +55,14 @@ ruleset org.sovrin.agents {
       ent:agents{name} := id
     }
   }
+  rule unmap_name {
+    select when collection member_removed Id re#(.+)# setting(id)
+    pre {
+      remaining_agents = ent:agents
+        .filter(function(v,k){v!=id})
+    }
+    fired {
+      ent:agents := remaining_agents
+    }
+  }
 }
