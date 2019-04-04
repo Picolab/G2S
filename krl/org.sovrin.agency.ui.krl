@@ -2,7 +2,7 @@ ruleset org.sovrin.agency.ui {
   meta {
     use module html
     use module colors
-    provides html
+    provides html, invitation
     shares __testing
   }
   global {
@@ -38,6 +38,9 @@ form:invalid button {
 </form>
 >>
         + html:footer()
+    }
+    invitation = function(name,did){
+      name + ", you may login with " + did
     }
   }
 }

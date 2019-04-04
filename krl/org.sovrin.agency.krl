@@ -3,7 +3,7 @@ ruleset org.sovrin.agency {
     use module io.picolabs.visual_params alias vp
     use module io.picolabs.wrangler alias wrangler
     use module org.sovrin.agency.ui alias ui
-    shares __testing, html
+    shares __testing, html, invitation
   }
   global {
     __testing = { "queries":
@@ -17,13 +17,20 @@ ruleset org.sovrin.agency {
     html = function(name){
       ui:html(name || vp:dname() || "Agency")
     }
+    invitation = function(name){
+      info = wrangler:skyQuery(
+        ent:agents_eci,
+        "org.sovrin.agents",
+        "agentByName",
+        {"name":name}
+      );
+      ui:invitation(info{"name"},info{"did"})
+    }
     agents_rids = [
       "io.picolabs.collection",
       "org.sovrin.agents"
     ]
     agent_rids = [
-      "org.sovrin.agent_message",
-      "org.sovrin.agent.ui",
       "org.sovrin.agent",
       "org.sovrin.agency_agent"
     ]
@@ -61,10 +68,18 @@ ruleset org.sovrin.agency {
       child_specs = event:attrs
         .delete("_headers")
         .put({ "subs_eci": ent:subs_eci })
+        .put("method","did")
     }
     every {
+      send_directive("hateos".uc(),{
+        "url": meta:host
+          + "/sky/cloud/"
+          + meta:eci
+          + "/org.sovrin.agency/invitation.txt?name="
+          + event:attr("name")
+      })
       event:send({"eci":wrangler:parent_eci(),
-        "domain": "wrangler", "type": "new_child_request",
+        "domain": "owner", "type": "creation",
         "attrs": child_specs.put({"rids":agent_rids})
       });
     }

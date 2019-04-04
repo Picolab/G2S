@@ -22,6 +22,7 @@ ruleset org.sovrin.agents {
       id => agents().filter(function(x){x{"Id"}==id})
                     .head()
                     .put("name",name)
+                    .put("did",ent:logins{name})
           | null
     }
   }
@@ -63,6 +64,12 @@ ruleset org.sovrin.agents {
     }
     fired {
       ent:agents := remaining_agents
+    }
+  }
+  rule store_login_did {
+    select when agent new_login_did
+    fired {
+      ent:logins{event:attr("name")} := event:attr("did")
     }
   }
 }
