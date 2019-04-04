@@ -40,7 +40,16 @@ form:invalid button {
         + html:footer()
     }
     invitation = function(name,did){
-      name + ", you may login with " + did
+      js = "document.execCommand('selectAll',false,null);"
+         + "document.execCommand('copy')";
+      html:header(name)
+      + <<<pre>#{name}, your DID is <span id="did" contenteditable
+      onclick="#{js}">#{did}</span></pre>
+>>
+      + <<<p>Click anywhere in the DID and then click on the "login" button.</p>
+<button type="button" onclick="location='#{meta:host}'">login</button>
+>>
+      + html:footer()
     }
   }
 }

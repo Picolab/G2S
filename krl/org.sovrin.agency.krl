@@ -75,7 +75,7 @@ ruleset org.sovrin.agency {
         "url": meta:host
           + "/sky/cloud/"
           + meta:eci
-          + "/org.sovrin.agency/invitation.txt?name="
+          + "/org.sovrin.agency/invitation.html?name="
           + event:attr("name")
       })
       event:send({"eci":wrangler:parent_eci(),
