@@ -57,9 +57,9 @@ PICO_ENGINE_HOST=https://e28640da.ngrok.io npm start
 
 ## Running a Pico Agency
 
-Start with a fresh pico engine.
+Start with a fresh pico engine (as above).
 
-You will need to register these rulesets for agencies:
+You will need to register these additional rulesets for agencies:
 
 ```
 https://raw.githubusercontent.com/Picolab/G2S/master/krl/colors.krl
@@ -91,8 +91,16 @@ In a browser, visit a URL like this one, using the ECI from your Agency pico.
 localhost:8080/sky/cloud/<ECI>/org.sovrin.agency/html.html
 ```
 
-Use the UI it presents to create new Agent Picos.
+Use the UI it presents to create new Agent Picos. Follow the HATEOS link to login as the owner of a new Agent Pico.
 
 Each one will be named with an email addresses, and also can be given
 a color, and a label for its invitations/connections.
+
+## Retiring a Pico Agency
+
+1. In the Agents pico, visit the Testing tab, open the `io.picolabs.collection` box, and click on "wrangler/deletion_imminent"
+2. Visit the About tab, click on the Parent ID, then the "del" link beside the name of the agency pico
+3. In the Root pico, visit the About tab and delete all its child picos
+4. Visit the Rulesets tab and delete the rulesets `io.picolabs.account_management` and `io.picolabs.owner_authentication`
+5. Click the "logout" button in the upper-right corner of the UI
 
