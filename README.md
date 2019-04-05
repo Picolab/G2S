@@ -16,7 +16,7 @@ PORT=8080 npm start
 
 This will start your pico engine at `http://localhost:8080`
 
-## Registering pico rulesets with your pico engine
+## Registering agent rulesets with your pico engine
 
 Using the ruleset editor built-in to your pico engine, register these rulesets:
 
@@ -54,3 +54,45 @@ For example.
 ```
 PICO_ENGINE_HOST=https://e28640da.ngrok.io npm start
 ```
+
+## Running a Pico Agency
+
+Start with a fresh pico engine.
+
+You will need to register these rulesets for agencies:
+
+```
+https://raw.githubusercontent.com/Picolab/G2S/master/krl/colors.krl
+https://raw.githubusercontent.com/Picolab/G2S/master/krl/org.sovrin.agency.ui.krl
+https://raw.githubusercontent.com/Picolab/G2S/master/krl/org.sovrin.agency.krl
+https://raw.githubusercontent.com/Picolab/G2S/master/krl/org.sovrin.agency_agent.krl
+https://raw.githubusercontent.com/Picolab/G2S/master/krl/org.sovrin.agents.krl
+```
+
+In the Root Pico install the `io.picolabs.account_management` ruleset.
+
+Click on the link "Need an owner pico?" to create a pico named "Agency"
+with a password you will need to remember briefly. Click "Submit".
+
+Login with the owner id "Agency" and the password.
+
+Visit the About tab of your Agency pico. You may change its name and color
+(for Sovrin, use #f6a12b).
+
+Install the `org.sovrin.agency` ruleset. This makes your pico be
+an Agency Pico.
+
+In the Channels tab, create a new channel, say ui/application and
+remember the ECI.
+
+In a browser, visit a URL like this one, using the ECI from your Agency pico.
+
+```
+localhost:8080/sky/cloud/<ECI>/org.sovrin.agency/html.html
+```
+
+Use the UI it presents to create new Agent Picos.
+
+Each one will be named with an email addresses, and also can be given
+a color, and a label for its invitations/connections.
+
