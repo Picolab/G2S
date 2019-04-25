@@ -11,7 +11,7 @@ git clone https://github.com/Picolab/pico-engine.git
 cd pico-engine/
 git checkout -t origin/indy-krl
 npm run setup
-PORT=8080 npm start
+PICO_ENGINE_HOST=http://localhost:8080 PORT=8080 npm start
 ```
 
 This will start your pico engine at `http://localhost:8080`
