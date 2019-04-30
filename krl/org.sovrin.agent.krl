@@ -5,13 +5,17 @@ ruleset org.sovrin.agent {
     use module io.picolabs.wrangler alias wrangler
     use module io.picolabs.visual_params alias vp
     use module webfinger alias wf
-    shares __testing, html, ui
+    shares __testing, html, ui, getEndpoint, connections
+    provides connections
   }
   global {
     __testing = { "queries":
       [ { "name": "__testing" }
+      , { "name": "connections" }
+      , { "name": "getEndpoint", "args" : ["my_did", "endpoint"] }
       ] , "events":
       [ { "domain": "webfinger", "type": "webfinger_wanted" }
+      , { "domain": "sovrin", "type": "update_endpoint", "attrs" : ["my_did", "their_host"] }
       ]
     }
     html = function(c_i){
@@ -46,6 +50,17 @@ ruleset org.sovrin.agent {
       );
       ep = <<#{meta:host}/sky/cloud/#{eci}/#{meta:rid}/html.html>>;
       ep + "?c_i=" + math:base64encode(im.encode())
+    }
+    //Function added by Jace, Beto, and Michael to update the connection's endpoints
+    getEndpoint = function(my_did, endpoint) {
+      endpoint + ent:connections.filter(function(v) {
+        v{"my_did"} == my_did
+      }).values().map(function(x) {
+        x{"their_endpoint"}
+      })[0].extract(re#(/sky/event/.*)#).head()//.split("/").slice(3, 8).join("/")
+    }
+    connections = function() {
+      ent:connections
     }
   }
 //
@@ -153,7 +168,7 @@ ruleset org.sovrin.agent {
 // receive messages
 //
   rule route_new_message {
-    select when sovrin new_message protected re#(.*)# setting(protected)
+    select when sovrin new_message protected re#(.+)# setting(protected)
     pre {
       outer = math:base64decode(protected).decode()
       kids = outer{"recipients"}
@@ -282,8 +297,12 @@ ruleset org.sovrin.agent {
       se = conn{"their_endpoint"}
       may_respond = msg{"response_requested"} == false => false | true
     }
-    if se && may_respond then
-      http:post(se,body=pm) setting(http_response)
+    if se && may_respond then noop()
+    fired {
+      raise sovrin event "new_ssi_agent_wire_message" attributes {
+        "serviceEndpoint": se, "packedMessage": pm
+      }
+    }
   }
 //
 // trust_ping/ping_response
@@ -378,6 +397,20 @@ ruleset org.sovrin.agent {
       raise wrangler event "channel_deletion_requested" attributes {
         "eci": my_did
       }
+    }
+  }
+
+  rule update_connection_endpoint {
+    select when sovrin update_endpoint
+    pre {
+      my_did = event:attr("my_did")
+      new_endpoint_host = event:attr("their_host")
+      new_endpoint = getEndpoint(my_did, new_endpoint_host)
+    }
+    fired {
+      ent:connections := ent:connections.map(function(v, k) {
+        (v{"my_did"} == my_did) => v.set(["their_endpoint"], new_endpoint)| v
+      })
     }
   }
 }
