@@ -19,6 +19,8 @@ ruleset org.sovrin.agent_message {
     }
     // message types
 
+    t_route_fwd = "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/routing/1.0/forward"
+
     t_basic_msg = "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/basicmessage/1.0/message"
 
     t_conn_invit = "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/connections/1.0/invitation"
@@ -149,6 +151,13 @@ ruleset org.sovrin.agent_message {
       {
         "@type": t_ping_res,
         "~thread": { "thid": thid }
+      }
+    }
+    routeFwdMap = function(to,pm){
+      {
+        "@type": t_route_fwd,
+        "to": to,
+        "msg": pm
       }
     }
   }
