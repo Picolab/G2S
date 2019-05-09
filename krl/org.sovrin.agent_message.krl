@@ -54,12 +54,8 @@ ruleset org.sovrin.agent_message {
         "serviceEndpoint": endpoint
       }
     }
-    connReqMap = function(label, my_did, my_vk, endpoint){
+    connMap = function(my_did, my_vk, endpoint){
       {
-        "@id": random:uuid(),
-        "@type": t_conn_req,
-        "label": label || vp:dname(),
-        "connection": {
           "DID": my_did,
           "DIDDoc": {
             "@context": "https://w3id.org/did/v1",
@@ -78,7 +74,14 @@ ruleset org.sovrin.agent_message {
               "serviceEndpoint": endpoint
             }]
           }
-        }
+      }
+    }
+    connReqMap = function(label, my_did, my_vk, endpoint){
+      {
+        "@id": random:uuid(),
+        "@type": t_conn_req,
+        "label": label || vp:dname(),
+        "connection": connMap(my_did, my_vk, endpoint)
       }
     }
     toByteArray = function(str){
@@ -100,26 +103,7 @@ ruleset org.sovrin.agent_message {
       }
     }
     connResMap = function(req_id, my_did, my_vk, endpoint){
-      connection =
-        {
-          "DID": my_did,
-          "DIDDoc": {
-            "@context": "https://w3id.org/did/v1",
-            "id": my_did,
-            "publicKey": [{
-              "id": my_did + "#keys-1",
-              "type": "Ed25519VerificationKey2018",
-              "controller": my_did,
-              "publicKeyBase58": my_vk
-            }],
-            "service": [{
-              "id": my_did + ";indy",
-              "type": "IndyAgent",
-              "recipientKeys": [my_vk],
-              "serviceEndpoint": endpoint
-             }]
-          }
-        };
+      connection = connMap(my_did, my_vk, endpoint);
       {
         "@type": t_conn_res,
         "@id": random:uuid(),
