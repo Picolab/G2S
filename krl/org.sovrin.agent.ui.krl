@@ -47,9 +47,9 @@ $(function(){
 secure message connection with you.
 To accept the invitation, you must have the <em>Pico Agent App</em>
 (or another <a href="https://sovrin.org/">Sovrin</a>-compatible agent app).</p>
-<p>Using your agent app, either scan the QR Code below,
+<p>Using your agent app, <span class="no-print">either </span>scan the QR Code below<span class="no-print">,
 or copy the URL from the location bar of your browser
-and paste it into your app.</p>
+and paste it into your app</span>.</p>
 >>
     }
     html = function(c_i){
