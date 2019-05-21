@@ -5,7 +5,8 @@ ruleset org.sovrin.agent_message {
       basicMsgMap,
       connInviteMap, connReqMap, connResMap,
       verify_signatures,
-      trustPingMap, trustPingResMap
+      trustPingMap, trustPingResMap,
+      routeFwdMap
     shares __testing
   }
   global {
