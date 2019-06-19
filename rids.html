@@ -3,11 +3,33 @@
   <head>
     <title>Register rulesets</title>
     <meta charset="UTF-8">
+    <script type="text/javascript">
+      function munge(ev) {
+        var e = ev || window.event;
+        var keyCode = e.code || e.keyCode;
+        if(keyCode==27 || keyCode==="Escape"){
+          document.execCommand("undo");
+          e.target.blur();
+        }else if(keyCode==13 || keyCode==="Enter"){
+          var thespan = e.target.textContent;
+          anchors = document.getElementsByTagName("a");
+          for(var i=0; i<anchors.length; ++i){
+            var newhref = "http://"+thespan+"/api/ruleset/register?url="+anchors[i].textContent;
+            anchors[i].href = newhref;
+          }
+          e.target.blur();
+          return false;
+        }
+      }
+    </script>
   </head>
   <body>
 <p>
 Clicking on the links below (in order) will register the rulesets required to have Agent Picos and run a Pico Agency.
-The links assume a pico engine running locally on port 8080.
+</p>
+<p>
+The links assume a pico engine running at
+<span contenteditable="true" onkeydown="munge(event)">localhost:8080</span>.
 </p>
 <p>Rulesets needed to be an agent</p>
 <a href="http://localhost:8080/api/ruleset/register?url=https://raw.githubusercontent.com/Picolab/G2S/master/krl/html.krl">https://raw.githubusercontent.com/Picolab/G2S/master/krl/html.krl</a></br>
