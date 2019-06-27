@@ -40,7 +40,7 @@ ruleset org.sovrin.agent {
       <<#{meta:host}/sky/event/#{eci}/#{eid}/#{d}/#{t}>>
     }
     invitation = function(){
-      uKR = ent:invitation_channel;
+      uKR = wrangler:channel("agent"); //ent:invitation_channel;
       eci = uKR{"id"};
       im = a_msg:connInviteMap(
         null, // @id
@@ -74,7 +74,7 @@ ruleset org.sovrin.agent {
     }
     wrangler:createChannel(meta:picoId,"agent","sovrin") setting(channel)
     fired {
-      ent:invitation_channel := channel;
+      ent:invitation_channel := channel; // not used
       ent:label := label
     }
   }
@@ -212,23 +212,37 @@ ruleset org.sovrin.agent {
       msg = event:attr("message")
       req_id = msg{"@id"}
       connection = msg{"connection"}
+      their_did = connection{"DID"}
       publicKeys = connection{["DIDDoc","publicKey"]}
         .map(function(x){x{"publicKeyBase58"}})
       their_vk = publicKeys.head()
-      se = connection{["DIDDoc","service"]}.head(){"serviceEndpoint"}
+      service = connection{["DIDDoc","service"]}
+        .filter(function(x){
+          x{"type"}=="IndyAgent"
+          && x{"id"}.match(their_did+";indy")
+        }).head()
+      se = service{"serviceEndpoint"}
+      their_rk = service{"routingKeys"}.defaultsTo([])
       chann = event:attr("channel")
       my_did = chann{"id"}
       my_vk = chann{["sovrin","indyPublic"]}
       endpoint = sEp(my_did)
       rm = a_msg:connResMap(req_id, my_did, my_vk, endpoint)
-      pm = indy:pack(rm.encode(),publicKeys,meta:eci)
+      pm = their_rk.reduce(
+        function(a,rk){
+          fm = a_msg:routeFwdMap(rk,a);
+          indy:pack(fm.encode(),[rk],meta:eci)
+        },
+        indy:pack(rm.encode(),publicKeys,meta:eci)
+      )
       c = {
         "created": time:now(),
         "label": msg{"label"},
         "my_did": my_did,
-        "their_did": connection{"DID"},
+        "their_did": their_did,
         "their_vk": their_vk,
-        "their_endpoint": se
+        "their_endpoint": se,
+        "their_routing": their_rk,
       }
     }
     fired {
