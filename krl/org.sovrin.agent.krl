@@ -230,11 +230,11 @@ ruleset org.sovrin.agent {
       rm = a_msg:connResMap(req_id, my_did, my_vk, endpoint)
       pm = their_rk.reduce(
         function(a,rk){
-          fm = a_msg:routeFwdMap(rk,a);
-          indy:pack(fm.encode(),[rk],meta:eci)
+          fm = a_msg:routeFwdMap(a[1],a.head());
+          [indy:pack(fm.encode(),[rk],meta:eci),rk]
         },
-        indy:pack(rm.encode(),publicKeys,meta:eci)
-      )
+        [indy:pack(rm.encode(),publicKeys,meta:eci),their_vk]
+      ).head()
       c = {
         "created": time:now(),
         "label": msg{"label"},
