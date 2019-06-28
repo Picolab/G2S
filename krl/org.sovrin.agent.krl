@@ -62,6 +62,16 @@ ruleset org.sovrin.agent {
     connections = function() {
       ent:connections
     }
+    packMsg = function(conn,msg,outer_did){
+      their_vk = conn{"their_vk"};
+      conn{"their_routing"}.defaultsTo([]).reduce(
+        function(a,rk){
+          fm = a_msg:routeFwdMap(a[1],a.head());
+          [indy:pack(fm.encode(),[rk],outer_did),rk]
+        },
+        [indy:pack(msg.encode(),[their_vk],outer_did),their_vk]
+      ).head()
+    }
   }
 //
 // on ruleset_added
@@ -222,19 +232,12 @@ ruleset org.sovrin.agent {
           && x{"id"}.match(their_did+";indy")
         }).head()
       se = service{"serviceEndpoint"}
-      their_rk = service{"routingKeys"}.defaultsTo([])
+      their_rks = service{"routingKeys"}.defaultsTo([])
       chann = event:attr("channel")
       my_did = chann{"id"}
       my_vk = chann{["sovrin","indyPublic"]}
       endpoint = sEp(my_did)
       rm = a_msg:connResMap(req_id, my_did, my_vk, endpoint)
-      pm = their_rk.reduce(
-        function(a,rk){
-          fm = a_msg:routeFwdMap(a[1],a.head());
-          [indy:pack(fm.encode(),[rk],meta:eci),rk]
-        },
-        [indy:pack(rm.encode(),publicKeys,meta:eci),their_vk]
-      ).head()
       c = {
         "created": time:now(),
         "label": msg{"label"},
@@ -242,8 +245,9 @@ ruleset org.sovrin.agent {
         "their_did": their_did,
         "their_vk": their_vk,
         "their_endpoint": se,
-        "their_routing": their_rk,
+        "their_routing": their_rks,
       }
+      pm = packMsg(c,rm,meta:eci)
     }
     fired {
       raise agent event "new_connection" attributes c;
