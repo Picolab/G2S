@@ -47,14 +47,15 @@ ruleset org.sovrin.agent_message {
       }
     }
     connInviteMap = function(id,label,key,endpoint,routingKeys){
-      {
+      minimal = {
         "@type": t_conn_invit,
         //"@id": id || random:uuid(),
         "label": label || vp:dname(),
         "recipientKeys": [key],
-        "serviceEndpoint": endpoint,
-        "routingKeys": routingKeys
-      }
+        "serviceEndpoint": endpoint
+      };
+      routingKeys.isnull() => minimal |
+        minimal.put({"routingKeys": routingKeys})
     }
     connMap = function(my_did, my_vk, endpoint,routingKeys){
       {
