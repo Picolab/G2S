@@ -46,16 +46,17 @@ ruleset org.sovrin.agent_message {
         "content": content
       }
     }
-    connInviteMap = function(id,label,key,endpoint){
+    connInviteMap = function(id,label,key,endpoint,routingKeys){
       {
         "@type": t_conn_invit,
         //"@id": id || random:uuid(),
         "label": label || vp:dname(),
         "recipientKeys": [key],
-        "serviceEndpoint": endpoint
+        "serviceEndpoint": endpoint,
+        "routingKeys": routingKeys
       }
     }
-    connMap = function(my_did, my_vk, endpoint){
+    connMap = function(my_did, my_vk, endpoint,routingKeys){
       {
           "DID": my_did,
           "DIDDoc": {
@@ -71,18 +72,18 @@ ruleset org.sovrin.agent_message {
               "id": my_did + ";indy",
               "type": "IndyAgent",
               "recipientKeys": [my_vk],
-              //"routingKeys": ["<example-agency-verkey>"],
+              "routingKeys": routingKeys.defaultsTo([]),
               "serviceEndpoint": endpoint
             }]
           }
       }
     }
-    connReqMap = function(label, my_did, my_vk, endpoint){
+    connReqMap = function(label, my_did, my_vk, endpoint, routingKeys){
       {
         "@id": random:uuid(),
         "@type": t_conn_req,
         "label": label || vp:dname(),
-        "connection": connMap(my_did, my_vk, endpoint)
+        "connection": connMap(my_did, my_vk, endpoint, routingKeys)
       }
     }
     toByteArray = function(str){
@@ -103,8 +104,8 @@ ruleset org.sovrin.agent_message {
         "sig_data": indy:sig_data(sig_data_bytes)
       }
     }
-    connResMap = function(req_id, my_did, my_vk, endpoint){
-      connection = connMap(my_did, my_vk, endpoint);
+    connResMap = function(req_id, my_did, my_vk, endpoint, routingKeys){
+      connection = connMap(my_did, my_vk, endpoint, routingKeys);
       {
         "@type": t_conn_res,
         "@id": random:uuid(),
