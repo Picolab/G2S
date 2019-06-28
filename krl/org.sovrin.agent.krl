@@ -157,16 +157,15 @@ ruleset org.sovrin.agent {
         sEp(my_did)
       )
       reqURL = im{"serviceEndpoint"}
-      packedBody = indy:pack(
-        rm.encode(),
-        im{"recipientKeys"},
-        my_did
-      )
       pc = {
         "label": im{"label"},
         "my_did": my_did,
-        "@id": rm{"@id"}
+        "@id": rm{"@id"},
+        "my_did": my_did,
+        "their_vk": im{"recipientKeys"}.head(),
+        "their_routing": im{"routingKeys"}.defaultsTo([]),
       }
+      packedBody = packMsg(pc,rm)
     }
     fired {
       ent:pending_conn := ent:pending_conn.defaultsTo([]).append(pc);
