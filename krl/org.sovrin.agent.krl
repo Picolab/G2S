@@ -64,12 +64,13 @@ ruleset org.sovrin.agent {
     }
     packMsg = function(conn,msg,outer_did){
       their_vk = conn{"their_vk"};
+      this_did = outer_did.defaultsTo(conn{"my_did"});
       conn{"their_routing"}.defaultsTo([]).reduce(
         function(a,rk){
           fm = a_msg:routeFwdMap(a[1],a.head());
-          [indy:pack(fm.encode(),[rk],outer_did),rk]
+          [indy:pack(fm.encode(),[rk],this_did),rk]
         },
-        [indy:pack(msg.encode(),[their_vk],outer_did),their_vk]
+        [indy:pack(msg.encode(),[their_vk],this_did),their_vk]
       ).head()
     }
   }
@@ -311,7 +312,7 @@ ruleset org.sovrin.agent {
       rm =a_msg:trustPingResMap(msg{"@id"})
       their_key = event:attr("sender_key")
       conn = ent:connections{their_key}
-      pm = indy:pack(rm.encode(),[their_key],conn{"my_did"})
+      pm = packMsg(conn,rm)
       se = conn{"their_endpoint"}
       may_respond = msg{"response_requested"} == false => false | true
     }
@@ -337,11 +338,7 @@ ruleset org.sovrin.agent {
       their_vk = event:attr("their_vk")
       conn = ent:connections{their_vk}
       rm = a_msg:trustPingMap()
-      pm = indy:pack(
-        rm.encode(),
-        [their_vk],
-        conn{"my_did"}
-      )
+      pm = packMsg(conn,rm)
       se = conn{"their_endpoint"}
     }
     if se then noop()
@@ -380,7 +377,7 @@ ruleset org.sovrin.agent {
       conn = ent:connections{their_key}
       content = event:attr("content")
       bm = a_msg:basicMsgMap(content)
-      pm = indy:pack(bm.encode(),[their_key],conn{"my_did"})
+      pm = packMsg(conn,bm)
       se = conn{"their_endpoint"}
       wmsg = conn.put(
         "messages",
