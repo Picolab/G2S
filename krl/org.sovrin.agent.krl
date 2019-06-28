@@ -270,6 +270,7 @@ ruleset org.sovrin.agent {
         .filter(function(x){x{"type"}=="IndyAgent"})
         .head()
       their_vk = service{"recipientKeys"}.head()
+      their_rks = service{"routingKeys"}.defaultsTo([])
       cid = verified{["~thread","thid"]}
       index = ent:pending_conn.defaultsTo([])
         .reduce(function(a,p,i){
@@ -281,7 +282,8 @@ ruleset org.sovrin.agent {
           "created": time:now(),
           "their_did": connection{"DID"},
           "their_vk": their_vk,
-          "their_endpoint": service{"serviceEndpoint"}
+          "their_endpoint": service{"serviceEndpoint"},
+          "their_routing": their_rks,
         })
     }
     if typeof(index) == "Number" && index >= 0 then noop()
