@@ -13,9 +13,7 @@ ruleset org.sovrin.router {
       ]
     }
     connection = function(vk){
-      agent:connections()
-        .filter(function(x){x{"their_vk"} == vk })
-        .head()
+      agent:connections(){vk}
     }
     stored_msg = function(vk){
       ent:stored_msgs{vk}
@@ -27,8 +25,9 @@ ruleset org.sovrin.router {
   rule store_or_forward_routed_message {
     select when sovrin routing_forward
     pre {
-      to = event:attr("to").klog("to")
-      pm = event:attr("msg").klog("pm")
+      message = event:attr("message")
+      to = message{"to"}.klog("to")
+      pm = message{"msg"}.klog("pm")
       se = connection(to){"their_endpoint"}.klog("se")
     }
     if se then noop()
