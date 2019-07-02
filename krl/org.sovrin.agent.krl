@@ -62,17 +62,6 @@ ruleset org.sovrin.agent {
     connections = function() {
       ent:connections
     }
-    packMsg = function(conn,msg,outer_did){
-      their_vk = conn{"their_vk"};
-      this_did = outer_did.defaultsTo(conn{"my_did"});
-      conn{"their_routing"}.defaultsTo([]).reduce(
-        function(a,rk){
-          fm = a_msg:routeFwdMap(a[1],a.head());
-          [indy:pack(fm.encode(),[rk],this_did),rk]
-        },
-        [indy:pack(msg.encode(),[their_vk],this_did),their_vk]
-      ).head()
-    }
   }
 //
 // on ruleset_added
@@ -165,7 +154,7 @@ ruleset org.sovrin.agent {
         "their_vk": im{"recipientKeys"}.head(),
         "their_routing": im{"routingKeys"}.defaultsTo([]),
       }
-      packedBody = packMsg(pc,rm)
+      packedBody = a_msg:packMsg(pc,rm)
     }
     fired {
       ent:pending_conn := ent:pending_conn.defaultsTo([]).append(pc);
@@ -247,7 +236,7 @@ ruleset org.sovrin.agent {
         "their_endpoint": se,
         "their_routing": their_rks,
       }
-      pm = packMsg(c,rm,meta:eci)
+      pm = a_msg:packMsg(c,rm,meta:eci)
     }
     fired {
       raise agent event "new_connection" attributes c;
@@ -313,7 +302,7 @@ ruleset org.sovrin.agent {
       rm =a_msg:trustPingResMap(msg{"@id"})
       their_key = event:attr("sender_key")
       conn = ent:connections{their_key}
-      pm = packMsg(conn,rm)
+      pm = a_msg:packMsg(conn,rm)
       se = conn{"their_endpoint"}
       may_respond = msg{"response_requested"} == false => false | true
     }
@@ -339,7 +328,7 @@ ruleset org.sovrin.agent {
       their_vk = event:attr("their_vk")
       conn = ent:connections{their_vk}
       rm = a_msg:trustPingMap()
-      pm = packMsg(conn,rm)
+      pm = a_msg:packMsg(conn,rm)
       se = conn{"their_endpoint"}
     }
     if se then noop()
@@ -378,7 +367,7 @@ ruleset org.sovrin.agent {
       conn = ent:connections{their_key}
       content = event:attr("content")
       bm = a_msg:basicMsgMap(content)
-      pm = packMsg(conn,bm)
+      pm = a_msg:packMsg(conn,bm)
       se = conn{"their_endpoint"}
       wmsg = conn.put(
         "messages",

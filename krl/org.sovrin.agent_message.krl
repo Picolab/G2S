@@ -6,7 +6,7 @@ ruleset org.sovrin.agent_message {
       connInviteMap, connReqMap, connResMap,
       verify_signatures,
       trustPingMap, trustPingResMap,
-      routeFwdMap
+      routeFwdMap, packMsg
     shares __testing
   }
   global {
@@ -146,6 +146,17 @@ ruleset org.sovrin.agent_message {
         "to": to,
         "msg": pm
       }
+    }
+    packMsg = function(conn,msg,outer_did){
+      their_vk = conn{"their_vk"};
+      this_did = outer_did.defaultsTo(conn{"my_did"});
+      conn{"their_routing"}.defaultsTo([]).reduce(
+        function(a,rk){
+          fm = routeFwdMap(a[1],a.head());
+          [indy:pack(fm.encode(),[rk],this_did),rk]
+        },
+        [indy:pack(msg.encode(),[their_vk],this_did),their_vk]
+      ).head()
     }
   }
 }
