@@ -13,7 +13,10 @@ ruleset org.sovrin.router {
       ]
     }
     connection = function(vk){
-      agent:connections(){vk}
+      agent:connections()
+        .values()
+        .filter(function(x){x{"their_vk"} == vk})
+        .head()
     }
     stored_msg = function(vk){
       ent:stored_msgs{vk}
