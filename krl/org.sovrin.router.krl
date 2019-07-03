@@ -22,7 +22,7 @@ ruleset org.sovrin.router {
         .head()
     }
     stored_msg = function(vk){
-      ent:stored_msgs{vk}
+      ent:stored_msgs{vk}.decode()
     }
   }
 //
