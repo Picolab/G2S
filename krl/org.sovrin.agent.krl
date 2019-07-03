@@ -6,7 +6,7 @@ ruleset org.sovrin.agent {
     use module io.picolabs.visual_params alias vp
     use module webfinger alias wf
     shares __testing, html, ui, getEndpoint, connections
-    provides connections, ui
+    provides connections, ui, sEp
   }
   global {
     __testing = { "queries":
