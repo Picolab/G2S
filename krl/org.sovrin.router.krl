@@ -1,7 +1,6 @@
 ruleset org.sovrin.router {
   meta {
     use module org.sovrin.agent_message alias a_msg
-    use module org.sovrin.agent alias agent
     use module io.picolabs.wrangler alias wrangler
     shares __testing, stored_msg
   }
@@ -15,9 +14,8 @@ ruleset org.sovrin.router {
       ]
     }
     connection = function(vk){
-      agent:connections()
+      ent:routingConnections.defaultsTo({})
         .values()
-        .append(ent:routingConnections.defaultsTo({}).values())
         .filter(function(x){x{"their_vk"} == vk})
         .head()
     }
@@ -61,7 +59,7 @@ ruleset org.sovrin.router {
       }
     }
     if c && their_label then
-      wrangler:createChannel(meta:picoId,their_label,"connection")
+      wrangler:createChannel(meta:picoId,their_label,"inbound_route")
         setting(channel)
     fired {
       raise router event "request_accepted"
