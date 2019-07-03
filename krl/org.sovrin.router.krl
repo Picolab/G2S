@@ -77,7 +77,7 @@ ruleset org.sovrin.router {
       label = conn{"label"}
       final_key = conn{"their_vk"}
       routing = [channel{["sovrin","indyPublic"]}]
-      endpoint = agent:sEp(my_did)
+      endpoint = a_msg:localServiceEndpoint(my_did)
       connection = conn
         .put({
           "my_did": my_did,

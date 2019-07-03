@@ -6,7 +6,7 @@ ruleset org.sovrin.agent {
     use module io.picolabs.visual_params alias vp
     use module webfinger alias wf
     shares __testing, html, ui, getEndpoint, connections
-    provides connections, ui, sEp
+    provides connections, ui
   }
   global {
     __testing = { "queries":
@@ -34,11 +34,6 @@ ruleset org.sovrin.agent {
         "wf": ent:webfinger,
       }
     }
-    sEp = function(eci,eid,e_d,e_t){
-      d = e_d || "sovrin";
-      t = e_t || "new_message";
-      <<#{meta:host}/sky/event/#{eci}/#{eid}/#{d}/#{t}>>
-    }
     invitation = function(){
       uKR = wrangler:channel("agent"); //ent:invitation_channel;
       eci = uKR{"id"};
@@ -46,7 +41,7 @@ ruleset org.sovrin.agent {
         null, // @id
         ent:label,
         uKR{["sovrin","indyPublic"]},
-        sEp(eci)
+        a_msg:localServiceEndpoint(eci)
       );
       ep = <<#{meta:host}/sky/cloud/#{eci}/#{meta:rid}/html.html>>;
       ep + "?c_i=" + math:base64encode(im.encode())
@@ -143,7 +138,7 @@ ruleset org.sovrin.agent {
         label,
         my_did,
         my_vk,
-        sEp(my_did)
+        a_msg:localServiceEndpoint(my_did)
       )
       reqURL = im{"serviceEndpoint"}
       pc = {
@@ -225,7 +220,7 @@ ruleset org.sovrin.agent {
       chann = event:attr("channel")
       my_did = chann{"id"}
       my_vk = chann{["sovrin","indyPublic"]}
-      endpoint = sEp(my_did)
+      endpoint = a_msg:localServiceEndpoint(my_did)
       rm = a_msg:connResMap(req_id, my_did, my_vk, endpoint)
       c = {
         "created": time:now(),

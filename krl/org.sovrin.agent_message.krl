@@ -1,7 +1,9 @@
 ruleset org.sovrin.agent_message {
   meta {
     use module io.picolabs.visual_params alias vp
-    provides specToEventType,
+    provides
+      localServiceEndpoint,
+      specToEventType,
       basicMsgMap,
       connInviteMap, connReqMap, connResMap,
       verify_signatures,
@@ -18,6 +20,11 @@ ruleset org.sovrin.agent_message {
       //, { "domain": "d2", "type": "t2", "attrs": [ "a1", "a2" ] }
       ]
     }
+    // local service endpoint
+    localServiceEndpoint = function(eci,eid){
+      <<#{meta:host}/sky/event/#{eci}/#{eid}/sovrin/new_message>>
+    }
+
     // message types
 
     t_route_fwd = "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/routing/1.0/forward"
