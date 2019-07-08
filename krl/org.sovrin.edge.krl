@@ -1,17 +1,21 @@
 ruleset org.sovrin.edge {
   meta {
     use module io.picolabs.wrangler alias wrangler
-    shares __testing, get_did, get_msg
+    shares __testing, get_vk, get_did, get_msg
   }
   global {
     __testing = { "queries":
       [ { "name": "__testing" }
+      , { "name": "get_vk", "args": [ "did" ] }
       , { "name": "get_did", "args": [ "vk" ] }
       , { "name": "get_msg", "args": [ "vk" ] }
       ] , "events":
       [ { "domain": "edge", "type": "poll_needed", "attrs": [ "vk" ] }
       //, { "domain": "d2", "type": "t2", "attrs": [ "a1", "a2" ] }
       ]
+    }
+    get_vk = function(did){
+      wrangler:channel(did || meta:eci){["sovrin","indyPublic"]}
     }
     get_did = function(vk){
       wrangler:channel()
