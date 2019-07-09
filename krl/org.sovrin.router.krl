@@ -2,11 +2,12 @@ ruleset org.sovrin.router {
   meta {
     use module org.sovrin.agent_message alias a_msg
     use module io.picolabs.wrangler alias wrangler
-    shares __testing, stored_msg, invitation
+    shares __testing, connection, stored_msg, invitation
   }
   global {
     __testing = { "queries":
       [ { "name": "__testing" }
+      , { "name": "connection", "args": [ "vk" ] }
       , { "name": "stored_msg", "args": [ "vk" ] }
       , { "name": "invitation", "args": [ "vk" ] }
       ] , "events":
