@@ -1,13 +1,15 @@
 ruleset org.sovrin.edge {
   meta {
     use module io.picolabs.wrangler alias wrangler
-    shares __testing, get_vk, get_did
+    use module org.sovrin.agent_message alias a_msg
+    shares __testing, get_vk, get_did, invitation_via
   }
   global {
     __testing = { "queries":
       [ { "name": "__testing" }
       , { "name": "get_vk", "args": [ "label" ] }
       , { "name": "get_did", "args": [ "vk" ] }
+      , { "name": "invitation_via", "args": [ "label" ] }
       ] , "events":
       [ { "domain": "edge", "type": "new_router", "attrs": [ "host", "eci" ] }
       , { "domain": "edge", "type": "need_router_connection", "attrs": [ "label" ] }
@@ -24,6 +26,15 @@ ruleset org.sovrin.edge {
       wrangler:channel()
         .filter(function(x){x{["sovrin","indyPublic"]} == vk})
         .head(){"id"}
+    }
+    invitation_via = function(label){
+      extendedLabel = label + " to " + wrangler:name();
+      eci = ent:routerConnections.defaultsTo({}){[extendedLabel,"my_did"]};
+      routing = ent:routerConnections.defaultsTo({}){[extendedLabel,"their_routing"]};
+      endpoint = <<#{ent:routerHost}/sky/event/#{eci}/null/sovrin/new_message>>;
+      i = a_msg:connInviteMap(null,wrangler:name(),get_vk(label),endpoint,routing);
+      <<#{ent:routerHost}/sky/cloud/#{eci}/org.sovrin.agent/html.html>>
+        + "?c_i=" + math:base64encode(i.encode())
     }
   }
   rule edge_new_router {
