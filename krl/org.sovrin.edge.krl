@@ -44,13 +44,14 @@ ruleset org.sovrin.edge {
       label re#(.+)# setting(label)
     pre {
       routerRequestURL = <<#{ent:routerHost}/sky/event/#{ent:routerRequestECI}/null/router/request>>
+      extendedLabel = label + " to " + wrangler:name()
     }
     every {
       wrangler:createChannel(meta:picoId,label,"router")
         setting(channel)
       http:post(routerRequestURL,qs={
         "final_key":channel{["sovrin","indyPublic"]},
-        "label":label,
+        "label":extendedLabel,
       }) setting(response)
     }
     fired {
