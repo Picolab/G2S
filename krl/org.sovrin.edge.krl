@@ -11,7 +11,7 @@ ruleset org.sovrin.edge {
       , { "name": "get_msg", "args": [ "vk" ] }
       ] , "events":
       [ { "domain": "edge", "type": "poll_needed", "attrs": [ "vk" ] }
-      //, { "domain": "d2", "type": "t2", "attrs": [ "a1", "a2" ] }
+      , { "domain": "edge", "type": "new_router", "attrs": [ "host", "eci" ] }
       ]
     }
     get_vk = function(did){
@@ -22,11 +22,21 @@ ruleset org.sovrin.edge {
         .filter(function(x){x{["sovrin","indyPublic"]} == vk})
         .head(){"id"}
     }
-    routerHost = "https://manifold.picolabs.io:9090"
     routerECI = "HvuJ6u7b5jrwJkXhndwsiX"
-    routerURL = <<#{routerHost}/sky/cloud/#{routerECI}/org.sovrin.router/stored_msg>>
+    routerURL = <<#{ent:routerHost}/sky/cloud/#{routerECI}/org.sovrin.router/stored_msg>>
     get_msg = function(vk){
       http:get(routerURL,qs={"vk":vk})
+    }
+    routerRequestURL = <<#{ent:routerHost}/sky/event/#{ent:routerRequestECI}/null/router/request>>
+  }
+  rule edge_new_router {
+    select when edge new_router
+      host re#(https?://.+)#
+      eci re#(.+)#
+      setting(host,eci)
+    fired {
+      ent:routerHost := host;
+      ent:routerRequestECI := eci
     }
   }
   rule poll_for_messages {
@@ -38,6 +48,7 @@ ruleset org.sovrin.edge {
     if eci && res{"status_code"} == 200 then
       event:send({"eci":eci, "domain":"sovrin", "type": "new_message",
         "attrs": res{"content"}.decode()
+          .put(["routerRequestURL"],routerRequestURL)
       })
   }
 }
