@@ -12,6 +12,7 @@ ruleset org.sovrin.edge {
       ] , "events":
       [ { "domain": "edge", "type": "poll_needed", "attrs": [ "vk" ] }
       , { "domain": "edge", "type": "new_router", "attrs": [ "host", "eci" ] }
+      , { "domain": "edge", "type": "need_router_connection", "attrs": [ "label" ] }
       ]
     }
     get_vk = function(did){
@@ -23,11 +24,10 @@ ruleset org.sovrin.edge {
         .head(){"id"}
     }
     routerECI = "HvuJ6u7b5jrwJkXhndwsiX"
-    routerURL = <<#{ent:routerHost}/sky/cloud/#{routerECI}/org.sovrin.router/stored_msg>>
     get_msg = function(vk){
+      routerURL = <<#{ent:routerHost}/sky/cloud/#{routerECI}/org.sovrin.router/stored_msg>>;
       http:get(routerURL,qs={"vk":vk})
     }
-    routerRequestURL = <<#{ent:routerHost}/sky/event/#{ent:routerRequestECI}/null/router/request>>
   }
   rule edge_new_router {
     select when edge new_router
@@ -39,9 +39,43 @@ ruleset org.sovrin.edge {
       ent:routerRequestECI := eci
     }
   }
+  rule make_router_connection {
+    select when edge need_router_connection
+      label re#(.+)# setting(label)
+    pre {
+      routerRequestURL = <<#{ent:routerHost}/sky/event/#{ent:routerRequestECI}/null/router/request>>
+    }
+    every {
+      wrangler:createChannel(meta:picoId,label,"router")
+        setting(channel)
+      http:post(routerRequestURL,qs={
+        "final_key":channel{["sovrin","indyPublic"]},
+        "label":label,
+      }) setting(response)
+    }
+    fired {
+      raise edge event "new_router_connection" attributes response.decode()
+    }
+  }
+  rule record_new_router_connection {
+    select when edge new_router_connection
+    pre {
+      ok = event:attr("status_code") == 200
+      directives = ok => event:attr("content").decode(){"directives"} | null
+      connection = ok => directives
+        .filter(function(x){x{"name"}=="request accepted"})
+        .head(){["options","connection"]} | null
+    }
+    if ok && connection{"label"} then noop()
+    fired {
+      ent:routerConnections := ent:routerConnections.defaultsTo({})
+        .put([connection{"label"}],connection)
+    }
+  }
   rule poll_for_messages {
     select when edge poll_needed vk re#(.+)# setting(vk)
     pre {
+      routerURL = <<#{ent:routerHost}/sky/cloud/#{routerECI}/org.sovrin.router/stored_msg>>
       eci = get_did(vk)
       res = eci => http:get(routerURL,qs={"vk":vk}) | {}
     }
