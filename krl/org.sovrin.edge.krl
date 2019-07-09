@@ -87,17 +87,20 @@ ruleset org.sovrin.edge {
     select when edge poll_needed label re#(.+)# setting(label)
     pre {
       extendedLabel = label + " to " + wrangler:name();
-      routerECI = ent:routerConnections.defaultsTo({}){[extendedLabel,"my_did"]}
-      routerURL = <<#{ent:routerHost}/sky/cloud/#{routerECI}/org.sovrin.router/stored_msg>>
+      other_eci = ent:routerConnections.defaultsTo({}){[extendedLabel,"my_did"]}
+      url = <<#{ent:routerHost}/sky/cloud/#{other_eci}/org.sovrin.router/stored_msg>>
       vk = get_vk(label)
       eci = vk => get_did(vk) | null
-      res = eci => http:get(routerURL,qs={"vk":vk}) | {}
+      res = eci => http:get(url,qs={"vk":vk}) | {}
       message = res{"status_code"} == 200 => res{"content"}.decode() | null
     }
     if vk && eci && message then
       event:send({"eci":eci, "domain":"sovrin", "type": "new_message",
         "attrs": message
-          .put(["routerRequestURL"],routerRequestURL)
+          .put(["routingInfo"],{
+            "endpoint": <<#{ent:routerHost}/sky/event/#{other_eci}/null/sovrin/new_message>>,
+            "routing": ent:routerConnections.defaultsTo({}){[extendedLabel,"their_routing"]}
+          })
       })
   }
 }
