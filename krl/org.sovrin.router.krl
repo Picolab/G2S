@@ -2,14 +2,12 @@ ruleset org.sovrin.router {
   meta {
     use module org.sovrin.agent_message alias a_msg
     use module io.picolabs.wrangler alias wrangler
-    shares __testing, connection, stored_msg, invitation
+    shares __testing, stored_msg
   }
   global {
     __testing = { "queries":
       [ { "name": "__testing" }
-      , { "name": "connection", "args": [ "vk" ] }
       , { "name": "stored_msg", "args": [ "vk" ] }
-      , { "name": "invitation", "args": [ "vk" ] }
       ] , "events":
       [ { "domain": "router", "type": "request", "attrs": [ "label", "final_key"] }
       //, { "domain": "d2", "type": "t2", "attrs": [ "a1", "a2" ] }
@@ -23,20 +21,6 @@ ruleset org.sovrin.router {
     }
     stored_msg = function(vk){
       ent:stored_msgs{vk}.decode()
-    }
-    invitation = function(vk){
-      conn = connection(vk);
-      the_invitation = function(){
-        my_did = conn{"my_did"};
-        label = conn{"label"};
-        final_key = conn{"their_vk"};
-        routing = conn{"their_routing"};
-        endpoint = a_msg:localServiceEndpoint(my_did);
-        a_msg:connInviteMap(null,label,final_key,endpoint,routing)
-      };
-      conn.isnull() => null |
-        <<#{meta:host}/sky/cloud/#{conn{"my_did"}}/org.sovrin.agent/html.html>>
-          + "?c_i=" + math:base64encode(the_invitation().encode())
     }
   }
 //
