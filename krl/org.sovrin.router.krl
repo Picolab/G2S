@@ -111,8 +111,8 @@ ruleset org.sovrin.router {
       raise router event "request_recorded" attributes {"vk": final_key}
     }
   }
-  rule return_a_routed_invitation {
+  rule return_the_routed_connection {
     select when router request_recorded vk re#(.+)# setting(vk)
-    send_directive("request accepted",{"invitation": invitation(vk)})
+    send_directive("request accepted",{"connection": connection(vk)})
   }
 }
