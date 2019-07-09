@@ -70,6 +70,8 @@ ruleset org.sovrin.edge {
     fired {
       ent:routerConnections := ent:routerConnections.defaultsTo({})
         .put([connection{"label"}],connection)
+    } else {
+      ent:failedResponse := event:attrs
     }
   }
   rule poll_for_messages {
