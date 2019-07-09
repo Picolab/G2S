@@ -47,7 +47,7 @@ ruleset org.sovrin.edge {
       extendedLabel = label + " to " + wrangler:name()
     }
     every {
-      wrangler:createChannel(meta:picoId,label,"router")
+      wrangler:createChannel(meta:picoId,extendedLabel,"router")
         setting(channel)
       http:post(routerRequestURL,qs={
         "final_key":channel{["sovrin","indyPublic"]},
