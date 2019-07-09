@@ -40,6 +40,15 @@ ruleset org.sovrin.router {
     }
   }
 //
+// initialize router
+//
+  rule initialize_router {
+    select when wrangler ruleset_added where event:attr("rids") >< meta:rid
+    // TODO need a policy that allows only router/request
+    wrangler:createChannel(meta:picoId,"router_request","well_known")
+      setting(channel)
+  }
+//
 // forward a message to a connection
 //
   rule store_or_forward_routed_message {
