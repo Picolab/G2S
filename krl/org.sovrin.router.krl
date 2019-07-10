@@ -10,7 +10,7 @@ ruleset org.sovrin.router {
       , { "name": "stored_msg", "args": [ "vk" ] }
       ] , "events":
       [ { "domain": "router", "type": "request", "attrs": [ "label", "final_key"] }
-      //, { "domain": "d2", "type": "t2", "attrs": [ "a1", "a2" ] }
+      , { "domain": "router", "type": "messages_not_needed", "attrs": [ "vk", "msgTags" ] }
       ]
     }
     connection = function(vk){
@@ -54,6 +54,25 @@ ruleset org.sovrin.router {
       }
     } else {
       ent:stored_msgs{to} := ent:stored_msgs{to}.defaultsTo([]).append(pm)
+    }
+  }
+  rule clean_up_stored_messages {
+    select when router messages_not_needed vk re#(.+)# setting(vk)
+    pre {
+      my_did = ent:routingConnections{[vk,"my_did"]}
+      msgTags = event:attr("msgTags").decode()
+      remaining = ent:stored_msgs{vk}.filter(function(x){
+        not (msgTags >< x.decode(){"tag"})
+      })
+    }
+    if meta:eci == my_did then
+      send_directive("clean_up_complete",{
+        "remove": msgTags.length(),
+        "were": ent:stored_msgs{vk}.length(),
+        "remaining": remaining.length(),
+      })
+    fired {
+      ent:stored_msgs{vk} := remaining
     }
   }
 //
