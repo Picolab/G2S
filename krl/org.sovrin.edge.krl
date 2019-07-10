@@ -12,15 +12,13 @@ ruleset org.sovrin.edge {
       , { "name": "invitation_via", "args": [ "label" ] }
       ] , "events":
       [ { "domain": "edge", "type": "new_router", "attrs": [ "host", "eci" ] }
-      , { "domain": "edge", "type": "need_router_connection", "attrs": [ "label" ] }
+      , { "domain": "edge", "type": "need_new_router_connection", "attrs": [ "label" ] }
       , { "domain": "edge", "type": "poll_needed", "attrs": [ "label" ] }
       ]
     }
     get_vk = function(label){
       extendedLabel = label + " to " + wrangler:name();
-      vk1 = ent:routerConnections.defaultsTo({}){[extendedLabel,"their_vk"]};
-      vk2 = wrangler:channel(extendedLabel){["sovrin","indyPublic"]};
-      vk1 && vk2 && vk1 == vk2 => vk1 | null
+      ent:routerConnections.defaultsTo({}){[extendedLabel,"their_vk"]}
     }
     get_did = function(vk){
       wrangler:channel()
@@ -47,23 +45,41 @@ ruleset org.sovrin.edge {
       ent:routerRequestECI := eci
     }
   }
-  rule make_router_connection {
-    select when edge need_router_connection
+//
+// router connection with a new channel
+//
+  rule make_new_router_connection {
+    select when edge need_new_router_connection
       label re#(.+)# setting(label)
     pre {
-      routerRequestURL = <<#{ent:routerHost}/sky/event/#{ent:routerRequestECI}/null/router/request>>
       extendedLabel = label + " to " + wrangler:name()
     }
-    every {
-      wrangler:createChannel(meta:picoId,extendedLabel,"router")
-        setting(channel)
-      http:post(routerRequestURL,qs={
-        "final_key":channel{["sovrin","indyPublic"]},
-        "label":extendedLabel,
-      }) setting(response)
-    }
+    wrangler:createChannel(meta:picoId,extendedLabel,"router")
+      setting(channel)
     fired {
-      raise edge event "new_router_connection" attributes response.decode()
+      raise edge event "need_router_connection" attributes {
+        "channel": channel,
+        "label": label,
+      }
+    }
+  }
+//
+// router connection with a pre-existing channel
+//
+  rule make_router_connection {
+    select when edge need_router_connection
+    pre {
+      channel = event:attr("channel")
+      routerRequestURL = <<#{ent:routerHost}/sky/event/#{ent:routerRequestECI}/null/router/request>>
+      extendedLabel = event:attr("label") + " to " + wrangler:name()
+    }
+    http:post(routerRequestURL,qs={
+      "final_key":channel{["sovrin","indyPublic"]},
+      "label":extendedLabel,
+    }) setting(response)
+    fired {
+      raise edge event "new_router_connection"
+        attributes event:attrs.put(response.decode())
     }
   }
   rule record_new_router_connection {
@@ -74,11 +90,15 @@ ruleset org.sovrin.edge {
       connection = ok => directives
         .filter(function(x){x{"name"}=="request accepted"})
         .head(){["options","connection"]} | null
+      endpoint = <<#{ent:routerHost}/sky/event/#{connection{"my_did"}}/null/sovrin/new_message>>
     }
     if ok && connection{"label"} then noop()
     fired {
       ent:routerConnections := ent:routerConnections.defaultsTo({})
-        .put([connection{"label"}],connection)
+        .put([connection{"label"}],connection);
+      raise edge event "new_router_connection_recorded"
+        attributes event:attrs.put("routing",
+          connection.put("endpoint",endpoint))
     } else {
       ent:failedResponse := event:attrs
     }
@@ -86,7 +106,7 @@ ruleset org.sovrin.edge {
   rule poll_for_messages {
     select when edge poll_needed label re#(.+)# setting(label)
     pre {
-      extendedLabel = label + " to " + wrangler:name();
+      extendedLabel = label + " to " + wrangler:name()
       other_eci = ent:routerConnections.defaultsTo({}){[extendedLabel,"my_did"]}
       url = <<#{ent:routerHost}/sky/cloud/#{other_eci}/org.sovrin.router/stored_msg>>
       vk = get_vk(label)
@@ -97,10 +117,7 @@ ruleset org.sovrin.edge {
     if vk && eci && message then
       event:send({"eci":eci, "domain":"sovrin", "type": "new_message",
         "attrs": message
-          .put(["routingInfo"],{
-            "endpoint": <<#{ent:routerHost}/sky/event/#{other_eci}/null/sovrin/new_message>>,
-            "routing": ent:routerConnections.defaultsTo({}){[extendedLabel,"their_routing"]}
-          })
+          .put(["need_router_connection"],true)
       })
   }
 }

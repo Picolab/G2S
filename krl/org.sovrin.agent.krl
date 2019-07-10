@@ -180,7 +180,9 @@ ruleset org.sovrin.agent {
     if event_type then
       send_directive("message routed",{"event_type":event_type})
     fired {
-      raise sovrin event event_type attributes all.put("message",msg)
+      raise sovrin event event_type attributes
+        all.put("message",msg)
+           .put("need_router_connection",event:attr("need_router_connection"))
     }
   }
 //
@@ -191,13 +193,35 @@ ruleset org.sovrin.agent {
     pre {
       msg = event:attr("message")
       their_label = msg{"label"}
+      need_router_connection = event:attr("need_router_connection")
     }
     if their_label then
       wrangler:createChannel(meta:picoId,their_label,"connection")
         setting(channel)
     fired {
+      raise edge event "need_router_connection"
+        attributes {
+          "message": msg,
+          "channel": channel,
+          "label": their_label,
+          "txn_id": meta:txnId,
+        } if need_router_connection;
       raise sovrin event "connections_request_accepted"
-        attributes { "message": msg, "channel": channel }
+        attributes {
+          "message": msg,
+          "channel": channel,
+        } if need_router_connection.isnull()
+    }
+  }
+  rule having_router_connection_accept_connection {
+    select when edge new_router_connection_recorded
+    pre {
+      pertinent = event:attr("txn_id") == meta:txnId
+    }
+    if pertinent then noop()
+    fired {
+      raise sovrin event "connections_request_accepted"
+        attributes event:attrs
     }
   }
   rule initiate_connections_response {
@@ -220,8 +244,10 @@ ruleset org.sovrin.agent {
       chann = event:attr("channel")
       my_did = chann{"id"}
       my_vk = chann{["sovrin","indyPublic"]}
-      endpoint = a_msg:localServiceEndpoint(my_did)
-      rm = a_msg:connResMap(req_id, my_did, my_vk, endpoint)
+      ri = event:attr("routing").klog("routing information")
+      rks = ri => ri{"their_routing"} | null
+      endpoint = ri => ri{"endpoint"} | a_msg:localServiceEndpoint(my_did)
+      rm = a_msg:connResMap(req_id, my_did, my_vk, endpoint,rks)
       c = {
         "created": time:now(),
         "label": msg{"label"},
