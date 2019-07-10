@@ -114,13 +114,13 @@ ruleset org.sovrin.edge {
       res = eci => http:get(url,qs={"vk":vk}) | {}
       message = res{"status_code"} == 200 => res{"content"}.decode() | null
     }
-    if vk && eci && message && message{"iv"} != ent:lastMsgIV{vk} then
+    if vk && eci && message && message{"tag"} != ent:lastMsgTag{vk} then
       event:send({"eci":eci, "domain":"sovrin", "type": "new_message",
         "attrs": message
           .put(["need_router_connection"],true)
       })
     fired {
-      ent:lastMsgIV{vk} := message{"iv"}
+      ent:lastMsgTag{vk} := message{"tag"}
     }
   }
   rule poll_at_system_startup {
