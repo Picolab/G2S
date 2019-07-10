@@ -112,15 +112,27 @@ ruleset org.sovrin.edge {
       vk = get_vk(label)
       eci = vk => get_did(vk) | null
       res = eci => http:get(url,qs={"vk":vk}) | {}
-      message = res{"status_code"} == 200 => res{"content"}.decode() | null
+      messages = res{"status_code"} == 200 => res{"content"}.decode() | null
     }
-    if vk && eci && message && message{"tag"} != ent:lastMsgTag{vk} then
-      event:send({"eci":eci, "domain":"sovrin", "type": "new_message",
+    if vk && eci && messages then noop()
+    fired {
+      raise edge event "new_messages" attributes {"messages":messages, "eci": eci}
+    }
+  }
+  rule process_each_message {
+    select when edge new_messages
+    foreach event:attr("messages") setting(x)
+    pre {
+      message = x.decode()
+    }
+    if not (ent:msgTags{vk}.defaultsTo([]) >< message{"tag"}) then
+      event:send({"eci":event:attr("eci"),
+        "domain":"sovrin", "type": "new_message",
         "attrs": message
           .put(["need_router_connection"],true)
       })
     fired {
-      ent:lastMsgTag{vk} := message{"tag"}
+      ent:msgTags{vk} := ent:msgTags{vk}.defaultsTo([]).append(message{"tag"})
     }
   }
   rule poll_at_system_startup {

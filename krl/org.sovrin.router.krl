@@ -14,7 +14,7 @@ ruleset org.sovrin.router {
       ]
     }
     connection = function(vk){
-      ent:routingConnections.defaultsTo({})
+      ent:routingConnections
         .values()
         .filter(function(x){x{"their_vk"} == vk})
         .head()
@@ -31,6 +31,10 @@ ruleset org.sovrin.router {
     // TODO need a policy that allows only router/request
     wrangler:createChannel(meta:picoId,"router_request","well_known")
       setting(channel)
+    fired {
+      ent:stored_msgs := {};
+      ent:routingConnections := {}
+    }
   }
 //
 // forward a message to a connection
@@ -49,7 +53,7 @@ ruleset org.sovrin.router {
         "serviceEndpoint": se, "packedMessage": pm
       }
     } else {
-      ent:stored_msgs{to} := pm
+      ent:stored_msgs{to} := ent:stored_msgs{to}.defaultsTo([]).append(pm)
     }
   }
 //
@@ -90,8 +94,7 @@ ruleset org.sovrin.router {
         })
     }
     fired {
-      ent:routingConnections := ent:routingConnections.defaultsTo({})
-        .put([final_key],connection);
+      ent:routingConnections{final_key} := connection;
       raise router event "request_recorded" attributes {"vk": final_key}
     }
   }
