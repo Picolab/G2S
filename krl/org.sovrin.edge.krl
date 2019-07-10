@@ -123,4 +123,15 @@ ruleset org.sovrin.edge {
       ent:lastMsgIV{vk} := message{"iv"}
     }
   }
+  rule poll_at_system_startup {
+    select when system online
+    foreach ent:routerConnections.keys() setting(extendedLabel)
+    pre {
+      label = extendedLabel.extract(re#(.+) to .+#).head()
+    }
+    if label then send_directive("polling",{"label":label})
+    fired {
+      raise edge event "poll_needed" attributes {"label":label}
+    }
+  }
 }
