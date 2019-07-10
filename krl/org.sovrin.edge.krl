@@ -116,17 +116,20 @@ ruleset org.sovrin.edge {
     }
     if vk && eci && messages then noop()
     fired {
-      raise edge event "new_messages" attributes {"messages":messages, "eci": eci}
+      raise edge event "new_messages" attributes {
+        "messages":messages, "eci": eci, "vk": vk}
     }
   }
   rule process_each_message {
     select when edge new_messages
     foreach event:attr("messages") setting(x)
     pre {
+      vk = event:attr("vk")
+      eci = event:attr("eci")
       message = x.decode()
     }
     if not (ent:msgTags{vk}.defaultsTo([]) >< message{"tag"}) then
-      event:send({"eci":event:attr("eci"),
+      event:send({"eci":eci,
         "domain":"sovrin", "type": "new_message",
         "attrs": message
           .put(["need_router_connection"],true)
