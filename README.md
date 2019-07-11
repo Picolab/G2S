@@ -96,7 +96,7 @@ Use the UI it presents to create new Agent Picos. Follow the HATEOS link to logi
 Each one will be named with an email addresses, and also can be given
 a color, and a label for its invitations/connections.
 
-## Retiring a Pico Agency
+### Retiring a Pico Agency
 
 1. In the Agents pico, visit the Testing tab, open the `io.picolabs.collection` box, and click on "wrangler/deletion_imminent"
 2. Visit the About tab, click on the Parent ID, then the "del" link beside the name of the agency pico
@@ -104,3 +104,22 @@ a color, and a label for its invitations/connections.
 4. Visit the Rulesets tab and delete the rulesets `io.picolabs.account_management` and `io.picolabs.owner_authentication`
 5. Click the "logout" button in the upper-right corner of the UI
 
+## Agent intermediaries
+
+Agents have a built-in ability to forward messages along an in-bound route.
+
+So that an agent can be used as an intermediary, you will need to register
+this additional ruleset, and install it in that Agent Pico.
+
+```
+https://raw.githubusercontent.com/Picolab/G2S/master/krl/org.sovrin.router.krl
+```
+You will need to register
+this additional ruleset for edge agents.
+
+```
+https://raw.githubusercontent.com/Picolab/G2S/master/krl/org.sovrin.edge.krl
+```
+
+When you install this ruleset in a Pico Agent, it will be able to set up
+an inbound route involving one intermediary.
