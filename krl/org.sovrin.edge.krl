@@ -108,7 +108,7 @@ ruleset org.sovrin.edge {
     pre {
       extendedLabel = label + " to " + wrangler:name()
       other_eci = ent:routerConnections.defaultsTo({}){[extendedLabel,"my_did"]}
-      url = <<#{ent:routerHost}/sky/cloud/#{other_eci}/org.sovrin.router/stored_msg>>
+      url = <<#{ent:routerHost}/sky/cloud/#{other_eci}/org.sovrin.router/stored_msgs>>
       vk = get_vk(label)
       eci = vk => get_did(vk) | null
       res = eci => http:get(url,qs={"vk":vk}) | {}

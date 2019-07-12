@@ -2,12 +2,12 @@ ruleset org.sovrin.router {
   meta {
     use module org.sovrin.agent_message alias a_msg
     use module io.picolabs.wrangler alias wrangler
-    shares __testing, stored_msg
+    shares __testing, stored_msgs
   }
   global {
     __testing = { "queries":
       [ { "name": "__testing" }
-      , { "name": "stored_msg", "args": [ "vk" ] }
+      , { "name": "stored_msgs", "args": [ "vk" ] }
       ] , "events":
       [ { "domain": "router", "type": "request", "attrs": [ "label", "final_key"] }
       , { "domain": "router", "type": "messages_not_needed", "attrs": [ "vk", "msgTags" ] }
@@ -19,7 +19,7 @@ ruleset org.sovrin.router {
         .filter(function(x){x{"their_vk"} == vk})
         .head()
     }
-    stored_msg = function(vk){
+    stored_msgs = function(vk){
       ent:stored_msgs{vk}.decode()
     }
   }
