@@ -41,6 +41,7 @@ ruleset org.sovrin.edge {
         "routerHost": ent:routerHost,
         "routerRequestECI": ent:routerRequestECI,
         "routerConnections": ent:routerConnections,
+        "invitationViaRouter": invitation_via(ent:routerName),
       }
     }
   }
