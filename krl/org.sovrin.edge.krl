@@ -2,7 +2,7 @@ ruleset org.sovrin.edge {
   meta {
     use module io.picolabs.wrangler alias wrangler
     use module org.sovrin.agent_message alias a_msg
-    shares __testing, get_vk, get_did, invitation_via
+    shares __testing, get_vk, get_did, invitation_via, ui
   }
   global {
     __testing = { "queries":
@@ -10,6 +10,7 @@ ruleset org.sovrin.edge {
       , { "name": "get_vk", "args": [ "label" ] }
       , { "name": "get_did", "args": [ "vk" ] }
       , { "name": "invitation_via", "args": [ "label" ] }
+      , { "name": "ui" }
       ] , "events":
       [ { "domain": "edge", "type": "new_router", "attrs": [ "host", "eci" ] }
       , { "domain": "edge", "type": "need_new_router_connection", "attrs": [ "label" ] }
@@ -33,6 +34,14 @@ ruleset org.sovrin.edge {
       i = a_msg:connInviteMap(null,wrangler:name(),get_vk(label),endpoint,routing);
       <<#{ent:routerHost}/sky/cloud/#{eci}/org.sovrin.agent/html.html>>
         + "?c_i=" + math:base64encode(i.encode())
+    }
+    ui = function() {
+      {
+        "routerName": ent:routerName,
+        "routerHost": ent:routerHost,
+        "routerRequestECI": ent:routerRequestECI,
+        "routerConnections": ent:routerConnections,
+      }
     }
   }
   rule edge_new_router {
@@ -60,7 +69,14 @@ ruleset org.sovrin.edge {
       raise edge event "need_router_connection" attributes {
         "channel": channel,
         "label": label,
-      }
+      };
+      raise edge event "new_router_name" attributes { "label": label }
+    }
+  }
+  rule set_router_name { // we only get one router for now
+    select when edge new_router_name label re#(.+)# setting(label)
+    fired {
+      ent:routerName := label
     }
   }
 //
