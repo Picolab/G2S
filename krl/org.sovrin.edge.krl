@@ -12,9 +12,9 @@ ruleset org.sovrin.edge {
       , { "name": "invitation_via", "args": [ "label" ] }
       , { "name": "ui" }
       ] , "events":
-      [ { "domain": "edge", "type": "new_router", "attrs": [ "host", "eci" ] }
-      , { "domain": "edge", "type": "need_new_router_connection", "attrs": [ "label" ] }
+      [ { "domain": "edge", "type": "new_router", "attrs": [ "host", "eci", "label" ] }
       , { "domain": "edge", "type": "poll_needed", "attrs": [ "label" ] }
+      , { "domain": "edge", "type": "poll_all_needed" }
       ]
     }
     get_vk = function(label){
@@ -49,18 +49,8 @@ ruleset org.sovrin.edge {
     select when edge new_router
       host re#(https?://.+)#
       eci re#(.+)#
-      setting(host,eci)
-    fired {
-      ent:routerHost := host;
-      ent:routerRequestECI := eci
-    }
-  }
-//
-// router connection with a new channel
-//
-  rule make_new_router_connection {
-    select when edge need_new_router_connection
-      label re#(.+)# setting(label)
+      label re#(.+)#
+      setting(host,eci,label)
     pre {
       extendedLabel = label + " to " + wrangler:name()
     }
@@ -71,13 +61,9 @@ ruleset org.sovrin.edge {
         "channel": channel,
         "label": label,
       };
-      raise edge event "new_router_name" attributes { "label": label }
-    }
-  }
-  rule set_router_name { // we only get one router for now
-    select when edge new_router_name label re#(.+)# setting(label)
-    fired {
-      ent:routerName := label
+      ent:routerHost := host;
+      ent:routerRequestECI := eci;
+      ent:routerName := label // we only get one router for now
     }
   }
 //
@@ -157,6 +143,7 @@ ruleset org.sovrin.edge {
   }
   rule poll_at_system_startup {
     select when system online
+             or edge poll_all_needed
     foreach ent:routerConnections.keys() setting(extendedLabel)
     pre {
       label = extendedLabel.extract(re#(.+) to .+#).head()
