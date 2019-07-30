@@ -113,8 +113,9 @@ ruleset org.sovrin.edge {
       other_eci = ent:routerConnections.defaultsTo({}){[extendedLabel,"my_did"]}
       url = <<#{ent:routerHost}/sky/cloud/#{other_eci}/org.sovrin.router/stored_msgs>>
       vk = get_vk(label)
+      exceptions = ent:msgTags{vk}
       eci = vk => get_did(vk) | null
-      res = eci => http:get(url,qs={"vk":vk}) | {}
+      res = eci => http:get(url,qs={"vk":vk,"exceptions":exceptions}) | {}
       messages = res{"status_code"} == 200 => res{"content"}.decode() | null
     }
     if vk && eci && messages then noop()
