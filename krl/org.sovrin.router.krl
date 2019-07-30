@@ -7,7 +7,7 @@ ruleset org.sovrin.router {
   global {
     __testing = { "queries":
       [ { "name": "__testing" }
-      , { "name": "stored_msgs", "args": [ "vk" ] }
+      , { "name": "stored_msgs", "args": [ "vk", "exceptions" ] }
       ] , "events":
       [ { "domain": "router", "type": "request", "attrs": [ "label", "final_key"] }
       , { "domain": "router", "type": "messages_not_needed", "attrs": [ "vk", "msgTags" ] }
@@ -19,8 +19,14 @@ ruleset org.sovrin.router {
         .filter(function(x){x{"their_vk"} == vk})
         .head()
     }
-    stored_msgs = function(vk){
-      ent:stored_msgs{vk}.decode()
+    stored_msgs = function(vk,exceptions){
+      msgTags = exceptions.decode(); // expecting an Array of Strings
+      except = function(x){
+        not (msgTags >< x{"tag"})
+      };
+      all_msgs = ent:stored_msgs{vk}.decode();
+      msgTags.isnull() => all_msgs
+                        | all_msgs.filter(except)
     }
   }
 //
