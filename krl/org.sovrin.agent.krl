@@ -6,12 +6,11 @@ ruleset org.sovrin.agent {
     use module io.picolabs.visual_params alias vp
     use module webfinger alias wf
     shares __testing, html, ui, getEndpoint, connections
-    provides connections, ui
   }
   global {
     __testing = { "queries":
       [ { "name": "__testing" }
-      , { "name": "connections" }
+      , { "name": "connections", "args": [ "label" ] }
       , { "name": "getEndpoint", "args" : ["my_did", "endpoint"] }
       ] , "events":
       [ { "domain": "webfinger", "type": "webfinger_wanted" }
@@ -54,8 +53,10 @@ ruleset org.sovrin.agent {
         x{"their_endpoint"}
       })[0].extract(re#(/sky/event/.*)#).head()//.split("/").slice(3, 8).join("/")
     }
-    connections = function() {
-      ent:connections
+    connections = function(label) {
+      matching = function(x){x{"label"}==label};
+      label => ent:connections.filter(matching).values().head()
+             | ent:connections
     }
   }
 //
