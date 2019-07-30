@@ -22,9 +22,9 @@ ruleset org.sovrin.router {
     stored_msgs = function(vk,exceptions){
       msgTags = exceptions.decode(); // expecting an Array of Strings
       except = function(x){
-        not (msgTags >< x{"tag"})
+        not (msgTags >< x.decode(){"tag"})
       };
-      all_msgs = ent:stored_msgs{vk}.decode();
+      all_msgs = ent:stored_msgs{vk};
       msgTags.isnull() => all_msgs
                         | all_msgs.filter(except)
     }
