@@ -19,7 +19,7 @@ ruleset org.sovrin.edge {
     }
     get_vk = function(label){
       extendedLabel = label + " to " + wrangler:name();
-      ent:routerConnections.defaultsTo({}){[extendedLabel,"their_vk"]}
+      ent:routerConnections{[extendedLabel,"their_vk"]}
     }
     get_did = function(vk){
       wrangler:channel()
@@ -28,15 +28,15 @@ ruleset org.sovrin.edge {
     }
     invitation_via = function(label){
       extendedLabel = label + " to " + wrangler:name();
-      eci = ent:routerConnections.defaultsTo({}){[extendedLabel,"my_did"]};
-      routing = ent:routerConnections.defaultsTo({}){[extendedLabel,"their_routing"]};
+      eci = ent:routerConnections{[extendedLabel,"my_did"]};
+      routing = ent:routerConnections{[extendedLabel,"their_routing"]};
       endpoint = <<#{ent:routerHost}/sky/event/#{eci}/null/sovrin/new_message>>;
       i = a_msg:connInviteMap(null,wrangler:name(),get_vk(label),endpoint,routing);
       <<#{ent:routerHost}/sky/cloud/#{eci}/org.sovrin.agent/html.html>>
         + "?c_i=" + math:base64encode(i.encode())
     }
     ui = function() {
-      ent:routerConnections.isnull() => null |
+      ent:routerConnections.keys().length() == 0 => null |
       {
         "routerName": ent:routerName,
         "routerHost": ent:routerHost,
@@ -49,6 +49,7 @@ ruleset org.sovrin.edge {
   rule initialize_a_router {
     select when wrangler ruleset_added where event:attr("rids") >< meta:rid
     fired {
+      ent:routerConnections := {};
       raise edge event "new_router" attributes event:attrs
     }
   }
@@ -104,8 +105,7 @@ ruleset org.sovrin.edge {
     }
     if ok && connection{"label"} then noop()
     fired {
-      ent:routerConnections := ent:routerConnections.defaultsTo({})
-        .put([connection{"label"}],connection);
+      ent:routerConnections{[connection{"label"}]} := connection;
       raise edge event "new_router_connection_recorded"
         attributes event:attrs.put("routing",
           connection.put("endpoint",endpoint))
@@ -117,10 +117,10 @@ ruleset org.sovrin.edge {
     select when edge poll_needed label re#(.+)# setting(label)
     pre {
       extendedLabel = label + " to " + wrangler:name()
-      other_eci = ent:routerConnections.defaultsTo({}){[extendedLabel,"my_did"]}
+      other_eci = ent:routerConnections{[extendedLabel,"my_did"]}
       url = <<#{ent:routerHost}/sky/cloud/#{other_eci}/org.sovrin.router/stored_msgs>>
       vk = get_vk(label)
-      exceptions = ent:msgTags{vk}
+      exceptions = ent:msgTags{vk}.defaultsTo([])
       eci = vk => get_did(vk) | null
       res = eci => http:get(url,qs={"vk":vk,"exceptions":exceptions}) | {}
       messages = res{"status_code"} == 200 => res{"content"}.decode() | null
@@ -131,6 +131,13 @@ ruleset org.sovrin.edge {
         "messages":messages, "eci": eci, "vk": vk}
     }
   }
+  rule initialize_msgTags {
+    select when edge new_messages
+      where ent:msgTags.isnull()
+    fired {
+      ent:msgTags := []
+    }
+  }
   rule process_each_message {
     select when edge new_messages
     foreach event:attr("messages") setting(x)
@@ -139,14 +146,14 @@ ruleset org.sovrin.edge {
       eci = event:attr("eci")
       message = x.decode()
     }
-    if not (ent:msgTags{vk}.defaultsTo([]) >< message{"tag"}) then
+    if not (ent:msgTags{vk} >< message{"tag"}) then
       event:send({"eci":eci,
         "domain":"sovrin", "type": "new_message",
         "attrs": message
           .put(["need_router_connection"],true)
       })
     fired {
-      ent:msgTags{vk} := ent:msgTags{vk}.defaultsTo([]).append(message{"tag"})
+      ent:msgTags{vk} := ent:msgTags{vk}.append(message{"tag"})
     }
   }
   rule poll_at_system_startup {
