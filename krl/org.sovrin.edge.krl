@@ -36,6 +36,7 @@ ruleset org.sovrin.edge {
         + "?c_i=" + math:base64encode(i.encode())
     }
     ui = function() {
+      ent:routerConnections.isnull() => null |
       {
         "routerName": ent:routerName,
         "routerHost": ent:routerHost,
@@ -43,6 +44,12 @@ ruleset org.sovrin.edge {
         "routerConnections": ent:routerConnections,
         "invitationViaRouter": invitation_via(ent:routerName),
       }
+    }
+  }
+  rule initialize_a_router {
+    select when wrangler ruleset_added where event:attr("rids") >< meta:rid
+    fired {
+      raise edge event "new_router" attributes event:attrs
     }
   }
   rule edge_new_router {
