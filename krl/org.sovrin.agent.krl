@@ -172,11 +172,8 @@ ruleset org.sovrin.agent {
       sanity = (kids >< my_vk)
         .klog("sanity")
       all = indy:unpack(event:attrs,meta:eci)
-      their_key = all{"sender_key"}
-      my_key = all{"recipient_key"}
       msg = all{"message"}.decode()
-      msg_type = msg{"@type"}
-      event_type = a_msg:specToEventType(msg_type)
+      event_type = a_msg:specToEventType(msg{"@type"})
     }
     if event_type then
       send_directive("message routed",{"event_type":event_type})
