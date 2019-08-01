@@ -50,6 +50,7 @@ ruleset org.sovrin.edge {
     select when wrangler ruleset_added where event:attr("rids") >< meta:rid
     fired {
       ent:routerConnections := {};
+      ent:msgTags := {};
       raise edge event "new_router" attributes event:attrs
     }
   }
@@ -125,17 +126,23 @@ ruleset org.sovrin.edge {
       res = eci => http:get(url,qs={"vk":vk,"exceptions":exceptions}) | {}
       messages = res{"status_code"} == 200 => res{"content"}.decode() | null
     }
-    if vk && eci && messages then noop()
+    if vk && eci && messages then
+      http:post(
+        <<#{ent:routerHost}/sky/event/#{other_eci}/cleanup/router/messages_not_needed>>,
+        body={"vk":vk,"msgTags":exceptions},
+        autosend = {"eci": meta:eci, "domain": "edge", "type": "http_post_response"}
+      )
     fired {
+      clear ent:msgTags{vk};
       raise edge event "new_messages" attributes {
         "messages":messages, "eci": eci, "vk": vk}
     }
   }
   rule initialize_msgTags {
-    select when edge new_messages
-      where ent:msgTags.isnull()
+    select when edge new_messages vk re#(.+)# setting(vk)
+      where ent:msgTags{vk}.isnull()
     fired {
-      ent:msgTags := []
+      ent:msgTags{vk} := []
     }
   }
   rule process_each_message {
