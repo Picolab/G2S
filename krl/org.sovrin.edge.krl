@@ -45,6 +45,15 @@ ruleset org.sovrin.edge {
         "invitationViaRouter": invitation_via(ent:routerName),
       }
     }
+    cleanup_router = defaction(eci,vk,oldTags){
+      needed = oldTags.length() > 0 => "Yes" | "No"
+      url = <<#{ent:routerHost}/sky/event/#{eci}/cleanup/router/messages_not_needed>>
+      choose needed {
+        Yes => http:post(url,json={"vk":vk,"msgTags":oldTags},
+          autosend={"eci":meta:eci,"domain":"edge","type":"http_post_response"});
+        No  => noop();
+      }
+    }
   }
   rule initialize_a_router {
     select when wrangler ruleset_added where event:attr("rids") >< meta:rid
@@ -118,20 +127,15 @@ ruleset org.sovrin.edge {
     select when edge poll_needed label re#(.+)# setting(label)
     pre {
       extendedLabel = label + " to " + wrangler:name()
-      other_eci = ent:routerConnections{[extendedLabel,"my_did"]}
-      url = <<#{ent:routerHost}/sky/cloud/#{other_eci}/org.sovrin.router/stored_msgs>>
+      router_eci = ent:routerConnections{[extendedLabel,"my_did"]}
+      url = <<#{ent:routerHost}/sky/cloud/#{router_eci}/org.sovrin.router/stored_msgs>>
       vk = get_vk(label)
       exceptions = ent:msgTags{vk}.defaultsTo([])
       eci = vk => get_did(vk) | null
       res = eci => http:get(url,qs={"vk":vk,"exceptions":exceptions}) | {}
       messages = res{"status_code"} == 200 => res{"content"}.decode() | null
     }
-    if vk && eci && messages then
-      http:post(
-        <<#{ent:routerHost}/sky/event/#{other_eci}/cleanup/router/messages_not_needed>>,
-        json={"vk":vk,"msgTags":exceptions},
-        autosend = {"eci": meta:eci, "domain": "edge", "type": "http_post_response"}
-      )
+    if vk && eci && messages then cleanup_router(router_eci,vk,exceptions)
     fired {
       clear ent:msgTags{vk};
       raise edge event "new_messages" attributes {
