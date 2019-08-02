@@ -129,7 +129,7 @@ ruleset org.sovrin.edge {
     if vk && eci && messages then
       http:post(
         <<#{ent:routerHost}/sky/event/#{other_eci}/cleanup/router/messages_not_needed>>,
-        body={"vk":vk,"msgTags":exceptions},
+        json={"vk":vk,"msgTags":exceptions},
         autosend = {"eci": meta:eci, "domain": "edge", "type": "http_post_response"}
       )
     fired {
