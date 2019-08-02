@@ -106,7 +106,7 @@ ruleset org.sovrin.agent {
 // accept invitation
 //
   rule accept_invitation {
-    select when sovrin new_invitation url re#(http.+)# setting(url)
+    select when sovrin new_invitation url re#(http.+[?].*c_i=.+)# setting(url)
     pre {
       qs = url.split("?").tail().join("?")
       args = qs.split("&")
