@@ -117,13 +117,25 @@ ruleset org.sovrin.agent {
       c_i = args{"c_i"}
       im = math:base64decode(c_i).decode()
       their_label = im{"label"}
+      need_router_connection = event:attr("need_router_connection")
     }
     if im && their_label then
       wrangler:createChannel(meta:picoId,their_label,"connection")
         setting(channel)
     fired {
+      raise edge event "need_router_connection"
+        attributes {
+          "invitation": im,
+          "channel": channel,
+          "label": their_label,
+          "txnId": meta:txnId,
+          "sovrin_event": "invitation_accepted",
+        } if need_router_connection;
       raise sovrin event "invitation_accepted"
-        attributes { "invitation": im, "channel": channel }
+        attributes {
+          "invitation": im,
+          "channel": channel
+        } if need_router_connection.isnull()
     }
   }
 //
@@ -136,11 +148,15 @@ ruleset org.sovrin.agent {
       chann = event:attr("channel")
       my_did = chann{"id"}
       my_vk = chann{["sovrin","indyPublic"]}
+      ri = event:attr("routing").klog("routing information")
+      rks = ri => ri{"their_routing"} | null
+      endpoint = ri => ri{"endpoint"} | a_msg:localServiceEndpoint(my_did)
       rm = a_msg:connReqMap(
         label,
         my_did,
         my_vk,
-        a_msg:localServiceEndpoint(my_did)
+        endpoint,
+        rks
       )
       reqURL = im{"serviceEndpoint"}
       pc = {
