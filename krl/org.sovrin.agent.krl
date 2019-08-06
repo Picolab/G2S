@@ -203,7 +203,8 @@ ruleset org.sovrin.agent {
           "message": msg,
           "channel": channel,
           "label": their_label,
-          "txn_id": meta:txnId,
+          "txnId": meta:txnId,
+          "sovrin_event": "connections_request_accepted",
         } if need_router_connection;
       raise sovrin event "connections_request_accepted"
         attributes {
@@ -212,14 +213,11 @@ ruleset org.sovrin.agent {
         } if need_router_connection.isnull()
     }
   }
-  rule having_router_connection_accept_connection {
+  rule having_router_connection_pursue_connection {
     select when edge new_router_connection_recorded
-    pre {
-      pertinent = event:attr("txn_id") == meta:txnId
-    }
-    if pertinent then noop()
+      where event:attr("txnId") == meta:txnId
     fired {
-      raise sovrin event "connections_request_accepted"
+      raise sovrin event event:attr("sovrin_event")
         attributes event:attrs
     }
   }
