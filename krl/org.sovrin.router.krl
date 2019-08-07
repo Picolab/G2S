@@ -127,4 +127,22 @@ ruleset org.sovrin.router {
     select when router request_recorded vk re#(.+)# setting(vk)
     send_directive("request accepted",{"connection": connection(vk)})
   }
+//
+// clean up internal data structures as needed
+//
+  rule clean_up_router_connection {
+    select when router router_connection_deletion_requested
+      vk re#(.+)# setting(vk)
+    pre {
+      ok = ent:routingConnections >< vk
+      eci = ent:routingConnections{[vk,"my_did"]}
+    }
+    if ok && eci == meta:eci then noop()
+    fired {
+      raise wrangler event "channel_deletion_requested"
+        attributes {"eci":eci};
+      clear ent:routingConnections{vk};
+      clear ent:stored_msgs{vk}
+    }
+  }
 }

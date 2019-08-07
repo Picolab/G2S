@@ -15,6 +15,7 @@ ruleset org.sovrin.edge {
       [ { "domain": "edge", "type": "new_router", "attrs": [ "host", "eci", "label" ] }
       , { "domain": "edge", "type": "poll_needed", "attrs": [ "label" ] }
       , { "domain": "edge", "type": "poll_all_needed" }
+      , { "domain": "edge", "type": "router_connection_deletion_requested", "attrs": [ "vk" ] }
       ]
     }
     get_vk = function(label){
@@ -177,6 +178,27 @@ ruleset org.sovrin.edge {
     if label then send_directive("polling",{"label":label})
     fired {
       raise edge event "poll_needed" attributes {"label":label}
+    }
+  }
+//
+// clean up internal data structures as needed
+//
+  rule clean_up_router_connection {
+    select when edge router_connection_deletion_requested
+      vk re#(.+)# setting(vk)
+    pre {
+      rc = ent:routerConnections.filter(function(x){x{"their_vk"}==vk})
+      eci = rc.values().head(){"my_did"}
+      extended_label = rc.keys().head()
+      ok = ent:routerHost && eci
+      url = <<#{ent:routerHost}/sky/event/#{eci}/cleanup/router/router_connection_deletion_requested>>
+    }
+    if ok then every {
+      http:post(url,qs={"vk":vk}) setting(response)
+      send_directive("router connection deleted",{"vk":vk,"response":response})
+    }
+    fired {
+      clear ent:routerConnections{extended_label}
     }
   }
 }

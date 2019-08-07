@@ -5,7 +5,7 @@ ruleset org.sovrin.agent {
     use module io.picolabs.wrangler alias wrangler
     use module io.picolabs.visual_params alias vp
     use module webfinger alias wf
-    shares __testing, html, ui, getEndpoint, connections
+    shares __testing, html, ui, getEndpoint, connections, pendingConnections
     provides connections, ui
   }
   global {
@@ -13,9 +13,11 @@ ruleset org.sovrin.agent {
       [ { "name": "__testing" }
       , { "name": "connections", "args": [ "label" ] }
       , { "name": "getEndpoint", "args" : ["my_did", "endpoint"] }
+      , { "name": "pendingConnections" }
       ] , "events":
       [ { "domain": "webfinger", "type": "webfinger_wanted" }
       , { "domain": "sovrin", "type": "update_endpoint", "attrs" : ["my_did", "their_host"] }
+      , { "domain": "agent", "type": "pending_connections_cleanup_requested" }
       ]
     }
     html = function(c_i){
@@ -58,6 +60,9 @@ ruleset org.sovrin.agent {
       matching = function(x){x{"label"}==label};
       label => ent:connections.filter(matching).values().head()
              | ent:connections
+    }
+    pendingConnections = function(){
+      ent:pending_conn
     }
   }
 //
@@ -445,6 +450,34 @@ ruleset org.sovrin.agent {
       ent:connections := ent:connections.map(function(v, k) {
         (v{"my_did"} == my_did) => v.set(["their_endpoint"], new_endpoint)| v
       })
+    }
+  }
+//
+// clean up internal data structures as needed
+//
+  rule clean_up_pending_connections {
+    select when agent pending_connections_cleanup_requested
+    foreach ent:pending_conn.defaultsTo([]) setting(conn)
+    pre {
+      eci = conn{"my_did"}
+      channel = wrangler:channel(eci)
+      vk = channel{["sovrin","indyPublic"]}
+    }
+    if eci && vk then noop()
+    fired {
+      raise edge event "router_connection_deletion_requested"
+        attributes {"vk":vk};
+      raise wrangler event "channel_deletion_requested"
+        attributes {"eci":eci}
+    }
+    finally {
+      raise agent event "pending_connections_cleanup_completed" on final
+    }
+  }
+  rule finalize_clean_up_pending_connections {
+    select when agent pending_connections_cleanup_completed
+    fired {
+      clear ent:pending_conn
     }
   }
 }
