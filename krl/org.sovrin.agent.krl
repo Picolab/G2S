@@ -151,13 +151,8 @@ ruleset org.sovrin.agent {
       ri = event:attr("routing").klog("routing information")
       rks = ri => ri{"their_routing"} | null
       endpoint = ri => ri{"endpoint"} | a_msg:localServiceEndpoint(my_did)
-      rm = a_msg:connReqMap(
-        label,
-        my_did,
-        my_vk,
-        endpoint,
-        rks
-      )
+      rm = a_msg:connReqMap(label,my_did,my_vk,endpoint,rks)
+        .klog("connections request")
       reqURL = im{"serviceEndpoint"}
       pc = {
         "label": im{"label"},
