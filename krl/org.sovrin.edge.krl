@@ -185,11 +185,11 @@ ruleset org.sovrin.edge {
 //
   rule clean_up_router_connection {
     select when edge router_connection_deletion_requested
-      vk re#(.+)# setting(vk)
+      label re#(.+)# setting(label)
     pre {
-      rc = ent:routerConnections.filter(function(x){x{"their_vk"}==vk})
-      eci = rc.values().head(){"my_did"}
-      extended_label = rc.keys().head()
+      extendedLabel = label + " to " + wrangler:name()
+      vk = ent:routerConnections{[extendedLabel,"their_vk"]}
+      eci = ent:routerConnections{[extendedLabel,"my_did"]}
       ok = ent:routerHost && eci
       url = <<#{ent:routerHost}/sky/event/#{eci}/cleanup/router/router_connection_deletion_requested>>
     }
@@ -198,7 +198,7 @@ ruleset org.sovrin.edge {
       send_directive("router connection deleted",{"vk":vk,"response":response})
     }
     fired {
-      clear ent:routerConnections{extended_label}
+      clear ent:routerConnections{extendedLabel}
     }
   }
 }

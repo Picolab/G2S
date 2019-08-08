@@ -432,7 +432,9 @@ ruleset org.sovrin.agent {
     if pairwise{"my_did"} == meta:eci then
       send_directive("delete",{"connection":pairwise})
     fired {
-      ent:connections := ent:connections.delete(their_vk);
+      clear ent:connections{their_vk};
+      raise edge event "router_connection_deletion_requested"
+        attributes {"label":pairwise{"label"}};
       raise wrangler event "channel_deletion_requested" attributes {
         "eci": my_did
       }
@@ -460,13 +462,12 @@ ruleset org.sovrin.agent {
     foreach ent:pending_conn.defaultsTo([]) setting(conn)
     pre {
       eci = conn{"my_did"}
-      channel = wrangler:channel(eci)
-      vk = channel{["sovrin","indyPublic"]}
+      label = conn{"label"}
     }
-    if eci && vk then noop()
+    if eci && label then noop()
     fired {
       raise edge event "router_connection_deletion_requested"
-        attributes {"vk":vk};
+        attributes {"label":label};
       raise wrangler event "channel_deletion_requested"
         attributes {"eci":eci}
     }
