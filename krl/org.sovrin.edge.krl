@@ -15,7 +15,7 @@ ruleset org.sovrin.edge {
       [ { "domain": "edge", "type": "new_router", "attrs": [ "host", "eci", "label" ] }
       , { "domain": "edge", "type": "poll_needed", "attrs": [ "label" ] }
       , { "domain": "edge", "type": "poll_all_needed" }
-      , { "domain": "edge", "type": "router_connection_deletion_requested", "attrs": [ "vk" ] }
+      , { "domain": "edge", "type": "router_connection_deletion_requested", "attrs": [ "label" ] }
       ]
     }
     get_vk = function(label){
