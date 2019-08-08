@@ -201,4 +201,20 @@ ruleset org.sovrin.edge {
       clear ent:routerConnections{extendedLabel}
     }
   }
+  rule remove_router {
+    select when edge router_removal_requested
+      where ent:routerHost && ent:routerName
+    pre {
+      extendedLabel = ent:routerName + " to " + wrangler:name()
+      ok = ent:routerConnections >< extendedLabel
+        && ent:routerConnections.keys().length() == 1
+    }
+    if ok then noop()
+    fired {
+      raise edge event "router_connection_deletion_requested"
+        attributes {"label":ent:routerName};
+      raise wrangler event "uninstall_rulesets_requested"
+        attributes {"rid":meta:rid};
+    }
+  }
 }
