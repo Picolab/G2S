@@ -199,8 +199,6 @@ ruleset org.sovrin.edge {
     }
     fired {
       clear ent:routerConnections{extendedLabel};
-      raise wrangler event "channel_deletion_requested"
-        attributes {"name":extendedLabel} if wrangler:channel(extendedLabel);
       raise edge event "router_connection_deleted";
     }
   }
@@ -215,6 +213,8 @@ ruleset org.sovrin.edge {
     }
     if ok then noop()
     fired {
+      raise wrangler event "channel_deletion_requested"
+        attributes {"name":extendedLabel} if wrangler:channel(extendedLabel);
       raise edge event "router_connection_deletion_requested"
         attributes {"label":ent:routerName};
     }
