@@ -441,8 +441,9 @@ ruleset org.sovrin.agent {
       my_did = meta:eci
       their_vk = event:attr("their_vk")
       pairwise = ent:connections{their_vk}
+      override = event:attr("final_cleanup")
     }
-    if pairwise{"my_did"} == meta:eci then
+    if pairwise{"my_did"} == meta:eci || override then
       send_directive("delete",{"connection":pairwise})
     fired {
       clear ent:connections{their_vk};
@@ -519,7 +520,8 @@ ruleset org.sovrin.agent {
     select when wrangler rulesets_need_to_cleanup
     foreach ent:connections.keys() setting(vk)
     fired {
-      raise sovrin event "connection_expired" attributes {"their_vk":vk}
+      raise sovrin event "connection_expired"
+        attributes {"their_vk":vk,"final_cleanup":true}
     }
     finally {
       raise agent event "connections_cleared" on final
