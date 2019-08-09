@@ -438,19 +438,19 @@ ruleset org.sovrin.agent {
   rule delete_connection {
     select when sovrin connection_expired
     pre {
-      my_did = meta:eci
       their_vk = event:attr("their_vk")
       pairwise = ent:connections{their_vk}
+      the_did = pairwise{"my_did"}
       override = event:attr("final_cleanup")
     }
-    if pairwise{"my_did"} == meta:eci || override then
+    if the_did == meta:eci || override then
       send_directive("delete",{"connection":pairwise})
     fired {
       clear ent:connections{their_vk};
       raise edge event "router_connection_deletion_requested"
         attributes {"label":pairwise{"label"}};
       raise wrangler event "channel_deletion_requested"
-        attributes {"eci": my_did}
+        attributes {"eci": the_did}
     }
   }
 
