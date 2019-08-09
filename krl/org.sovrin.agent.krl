@@ -450,7 +450,7 @@ ruleset org.sovrin.agent {
       raise edge event "router_connection_deletion_requested"
         attributes {"label":pairwise{"label"}};
       raise wrangler event "channel_deletion_requested"
-        attributes {"eci": the_did}
+        attributes {"eci": the_did} if wrangler:channel(the_did)
     }
   }
 
@@ -482,7 +482,7 @@ ruleset org.sovrin.agent {
       raise edge event "router_connection_deletion_requested"
         attributes {"label":label};
       raise wrangler event "channel_deletion_requested"
-        attributes {"eci":eci}
+        attributes {"eci":eci} if wrangler:channel(eci)
     }
     finally {
       raise agent event "pending_connections_cleanup_completed" on final
