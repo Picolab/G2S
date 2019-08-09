@@ -221,6 +221,7 @@ ruleset org.sovrin.edge {
   }
   rule remove_this_ruleset {
     select when edge router_connection_deleted
+      where ent:routerConnections.keys().length() == 0
     fired {
       raise wrangler event "uninstall_rulesets_requested"
         attributes {"rid":meta:rid};
