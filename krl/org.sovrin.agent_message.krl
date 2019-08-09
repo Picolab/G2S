@@ -1,6 +1,5 @@
 ruleset org.sovrin.agent_message {
   meta {
-    use module io.picolabs.visual_params alias vp
     provides
       localServiceEndpoint,
       specToEventType,
@@ -57,7 +56,7 @@ ruleset org.sovrin.agent_message {
       minimal = {
         "@type": t_conn_invit,
         //"@id": id || random:uuid(),
-        "label": label || vp:dname(),
+        "label": label,
         "recipientKeys": [key],
         "serviceEndpoint": endpoint
       };
@@ -90,7 +89,7 @@ ruleset org.sovrin.agent_message {
       {
         "@id": random:uuid(),
         "@type": t_conn_req,
-        "label": label || vp:dname(),
+        "label": label,
         "connection": connMap(my_did, my_vk, endpoint, routingKeys)
       }
     }

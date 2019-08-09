@@ -30,14 +30,14 @@ ruleset org.sovrin.agent {
           a{"created"} cmp b{"created"}
         });
       {
-        "name": ent:label || wrangler:name(),
+        "name": ent:label,
         "connections": connections.length() => connections | null,
         "invitation": invitation(),
         "wf": ent:webfinger,
       }
     }
     invitation = function(){
-      uKR = wrangler:channel("agent"); //ent:invitation_channel;
+      uKR = wrangler:channel("agent");
       eci = uKR{"id"};
       im = a_msg:connInviteMap(
         null, // @id
@@ -71,13 +71,14 @@ ruleset org.sovrin.agent {
   rule on_installation {
     select when wrangler ruleset_added where event:attr("rids") >< meta:rid
     pre {
-      rs_attrs = event:attr("rs_attrs")
-      label = rs_attrs{"label"}
+      label = event:attr("label")
+        || event:attr("rs_attrs"){"label"}
     }
-    wrangler:createChannel(meta:picoId,"agent","sovrin") setting(channel)
-    fired {
-      ent:invitation_channel := channel; // not used
-      ent:label := label
+    if wrangler:channel("agent").isnull() then
+      wrangler:createChannel(meta:picoId,"agent","sovrin")
+    always {
+      ent:label := label || wrangler:name();
+      ent:connections := {};
     }
   }
   rule webfinger_check {
@@ -435,9 +436,8 @@ ruleset org.sovrin.agent {
       clear ent:connections{their_vk};
       raise edge event "router_connection_deletion_requested"
         attributes {"label":pairwise{"label"}};
-      raise wrangler event "channel_deletion_requested" attributes {
-        "eci": my_did
-      }
+      raise wrangler event "channel_deletion_requested"
+        attributes {"eci": my_did}
     }
   }
 
