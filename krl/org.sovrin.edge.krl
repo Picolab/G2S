@@ -198,7 +198,9 @@ ruleset org.sovrin.edge {
       send_directive("router connection deleted",{"vk":vk,"response":response})
     }
     fired {
-      clear ent:routerConnections{extendedLabel}
+      clear ent:routerConnections{extendedLabel};
+      raise wrangler event "channel_deletion_requested"
+        attributes {"name":extendedLabel}
     }
   }
   rule remove_router {
