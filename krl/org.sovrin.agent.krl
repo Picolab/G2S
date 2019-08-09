@@ -87,6 +87,13 @@ ruleset org.sovrin.agent {
       ent:webfinger := wf:webfinger(wrangler:name())
     }
   }
+  rule check_label {
+    select when agent check_state
+      where not ent:label
+    fired {
+      ent:label := wrangler:name()
+    }
+  }
 //
 // send ssi_agent_wire message
 //
@@ -129,6 +136,7 @@ ruleset org.sovrin.agent {
       wrangler:createChannel(meta:picoId,their_label,"connection")
         setting(channel)
     fired {
+      raise agent event "check_state";
       raise edge event "need_router_connection"
         attributes {
           "invitation": im,
@@ -157,7 +165,7 @@ ruleset org.sovrin.agent {
       ri = event:attr("routing").klog("routing information")
       rks = ri => ri{"their_routing"} | null
       endpoint = ri => ri{"endpoint"} | a_msg:localServiceEndpoint(my_did)
-      rm = a_msg:connReqMap(label,my_did,my_vk,endpoint,rks)
+      rm = a_msg:connReqMap(ent:label,my_did,my_vk,endpoint,rks)
         .klog("connections request")
       reqURL = im{"serviceEndpoint"}
       pc = {
@@ -196,6 +204,7 @@ ruleset org.sovrin.agent {
     if event_type then
       send_directive("message routed",{"event_type":event_type})
     fired {
+      raise agent event "check_state";
       raise sovrin event event_type attributes
         all.put("message",msg)
            .put("need_router_connection",event:attr("need_router_connection"))
