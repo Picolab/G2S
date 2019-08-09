@@ -89,7 +89,10 @@ ruleset org.sovrin.agent {
   }
   rule check_label {
     select when agent check_state
-      where not ent:label
+    pre {
+      bad = ent:label.isnull() || typeof(ent:label) != "String" || ent:label == ""
+    }
+    if bad then noop()
     fired {
       ent:label := wrangler:name()
     }
