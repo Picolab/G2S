@@ -139,7 +139,7 @@ ruleset org.sovrin.agent {
       wrangler:createChannel(meta:picoId,their_label,"connection")
         setting(channel)
     fired {
-      raise agent event "check_state";
+      raise agent event "check_state" attributes {};
       raise edge event "need_router_connection"
         attributes {
           "invitation": im,
@@ -207,7 +207,7 @@ ruleset org.sovrin.agent {
     if event_type then
       send_directive("message routed",{"event_type":event_type})
     fired {
-      raise agent event "check_state";
+      raise agent event "check_state" attributes {};
       raise sovrin event event_type attributes
         all.put("message",msg)
            .put("need_router_connection",event:attr("need_router_connection"))
@@ -485,14 +485,14 @@ ruleset org.sovrin.agent {
         attributes {"eci":eci} if wrangler:channel(eci)
     }
     finally {
-      raise agent event "pending_connections_cleanup_completed" on final
+      raise agent event "pending_connections_cleanup_completed" attributes {} on final
     }
   }
   rule finalize_clean_up_pending_connections {
     select when agent pending_connections_cleanup_completed
     fired {
       clear ent:pending_conn;
-      raise agent event "pending_connections_cleared"
+      raise agent event "pending_connections_cleared" attributes {}
     }
   }
   rule clean_up_prior_to_pico_deletion_part0 {
@@ -506,14 +506,14 @@ ruleset org.sovrin.agent {
   rule clean_up_prior_to_pico_deletion_part1a {
     select when wrangler rulesets_need_to_cleanup
     fired {
-      raise agent event "pending_connections_cleanup_requested"
+      raise agent event "pending_connections_cleanup_requested" attributes {}
     }
   }
   rule clean_up_prior_to_pico_deletion_part1b {
     select when wrangler rulesets_need_to_cleanup
       where ent:pending_conn.isnull()
     fired {
-      raise agent event "pending_connections_cleared"
+      raise agent event "pending_connections_cleared" attributes {}
     }
   }
   rule clean_up_prior_to_pico_deletion_part2a {
@@ -524,14 +524,14 @@ ruleset org.sovrin.agent {
         attributes {"their_vk":vk,"final_cleanup":true}
     }
     finally {
-      raise agent event "connections_cleared" on final
+      raise agent event "connections_cleared" attributes {} on final
     }
   }
   rule clean_up_prior_to_pico_deletion_part2b {
     select when wrangler rulesets_need_to_cleanup
       where ent:connections.keys().length() == 0
     fired {
-      raise agent event "connections_cleared"
+      raise agent event "connections_cleared" attributes {}
     }
   }
   rule clean_up_prior_to_pico_deletion_part3 {

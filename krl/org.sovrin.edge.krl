@@ -199,7 +199,7 @@ ruleset org.sovrin.edge {
     }
     fired {
       clear ent:routerConnections{extendedLabel};
-      raise edge event "router_connection_deleted";
+      raise edge event "router_connection_deleted" attributes {};
     }
   }
   rule remove_router {
