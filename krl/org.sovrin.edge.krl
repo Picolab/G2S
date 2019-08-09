@@ -200,11 +200,13 @@ ruleset org.sovrin.edge {
     fired {
       clear ent:routerConnections{extendedLabel};
       raise wrangler event "channel_deletion_requested"
-        attributes {"name":extendedLabel}
+        attributes {"name":extendedLabel};
+      raise edge event "router_connection_deleted";
     }
   }
   rule remove_router {
     select when edge router_removal_requested
+      or wrangler rulesets_need_to_cleanup
       where ent:routerHost && ent:routerName
     pre {
       extendedLabel = ent:routerName + " to " + wrangler:name()
@@ -215,6 +217,11 @@ ruleset org.sovrin.edge {
     fired {
       raise edge event "router_connection_deletion_requested"
         attributes {"label":ent:routerName};
+    }
+  }
+  rule remove_this_ruleset {
+    select when edge router_connection_deleted
+    fired {
       raise wrangler event "uninstall_rulesets_requested"
         attributes {"rid":meta:rid};
     }
