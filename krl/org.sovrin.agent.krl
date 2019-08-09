@@ -478,7 +478,55 @@ ruleset org.sovrin.agent {
   rule finalize_clean_up_pending_connections {
     select when agent pending_connections_cleanup_completed
     fired {
-      clear ent:pending_conn
+      clear ent:pending_conn;
+      raise agent event "pending_connections_cleared"
+    }
+  }
+  rule clean_up_prior_to_pico_deletion_part0 {
+    select when wrangler rulesets_need_to_cleanup
+      where wrangler:channel("agent")
+    fired {
+      raise wrangler event "channel_deletion_requested"
+        attributes {"name":"agent"}
+    }
+  }
+  rule clean_up_prior_to_pico_deletion_part1a {
+    select when wrangler rulesets_need_to_cleanup
+    fired {
+      raise agent event "pending_connections_cleanup_requested"
+    }
+  }
+  rule clean_up_prior_to_pico_deletion_part1b {
+    select when wrangler rulesets_need_to_cleanup
+      where ent:pending_conn.isnull()
+    fired {
+      raise agent event "pending_connections_cleared"
+    }
+  }
+  rule clean_up_prior_to_pico_deletion_part2a {
+    select when wrangler rulesets_need_to_cleanup
+    foreach ent:connections.keys() setting(vk)
+    fired {
+      raise sovrin event "connection_expired" attributes {"their_vk":vk}
+    }
+    finally {
+      raise agent event "connections_cleared" on final
+    }
+  }
+  rule clean_up_prior_to_pico_deletion_part2b {
+    select when wrangler rulesets_need_to_cleanup
+      where ent:connections.keys().length() == 0
+    fired {
+      raise agent event "connections_cleared"
+    }
+  }
+  rule clean_up_prior_to_pico_deletion_part3 {
+    select when wrangler rulesets_need_to_cleanup
+      before (agent pending_connections_cleared
+        and agent connections_cleared)
+    fired {
+      raise wrangler event "cleanup_finished"
+        attributes {"domain": meta:rid}
     }
   }
 }
