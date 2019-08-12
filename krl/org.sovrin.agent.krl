@@ -119,6 +119,21 @@ ruleset org.sovrin.agent {
       ent:last_http_response := event:attrs
     }
   }
+  rule record_eci_not_found_error {
+    select when http post status_code re#404#
+    pre {
+      content = event:attr("content").decode()
+      eci = content{"error"}.extract(re#ECI not found: (.+)#).head()
+      conn = ent:connections.filter(function(c){
+        c{"their_did"} == eci
+      })
+      vk = conn.keys().head()
+    }
+    if eci && conn then noop()
+    fired {
+      ent:connections{[vk,"error"]} := "ECI not found: "+eci
+    }
+  }
 //
 // accept invitation
 //
