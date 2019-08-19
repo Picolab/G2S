@@ -79,7 +79,7 @@ ruleset org.sovrin.agent {
     always {
       ent:label := label || wrangler:name();
       ent:connections := {};
-      raise event "wrangler:ruleset_needs_cleanup_period" attributes {
+      raise wrangler event "ruleset_needs_cleanup_period" attributes {
         "domain": meta:rid
       }
     }
