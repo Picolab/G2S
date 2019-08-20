@@ -324,7 +324,7 @@ ruleset org.sovrin.agent {
         .head()
       their_vk = service{"recipientKeys"}.head()
       their_rks = service{"routingKeys"}.defaultsTo([])
-      cid = verified{["~thread","thid"]}
+      cid = msg{["~thread","thid"]}
       index = ent:pending_conn.defaultsTo([])
         .reduce(function(a,p,i){
           a<0 && p{"@id"}==cid => i | a
