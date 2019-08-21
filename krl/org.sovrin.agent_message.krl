@@ -121,7 +121,10 @@ ruleset org.sovrin.agent_message {
       }
     }
     verify_signed_field = function(signed_field){
-      answer = indy:verify_signed_field(signed_field).klog("answer");
+      signature = signed_field{"signature"};
+      _signed_field = signature.match(re#==$#) => signed_field
+        | signed_field.put("signature",signature + "==");
+      answer = indy:verify_signed_field(_signed_field);
       timestamp = answer{"timestamp"}
         .values()
         .reduce(function(a,dig){a*256+dig});
