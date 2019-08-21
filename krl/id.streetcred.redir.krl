@@ -15,7 +15,8 @@ ruleset id.streetcred.redir {
     }
     if location && location.match(prefix) then noop()
     fired {
-      raise sovrin event "new_invitation" attributes {"url":"http://"+location}
+      raise sovrin event "new_invitation"
+        attributes event:attrs.put("url","http://"+location)
     }
   }
 }
