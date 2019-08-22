@@ -1,6 +1,6 @@
 ruleset id.streetcred.redir {
   global {
-    prefix = re#^id.streetcred://launch/[?]c_i=#
+    prefix = re#^id.streetcred://launch/[?]c_i=.+#
   }
 //
 // convert streetcred invitation into one acceptable to Agent Pico
