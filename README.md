@@ -3,13 +3,11 @@ Indy Agency based on the Pico-Engine
 
 ## Installing a pico engine
 
-To support a Pico Agent, you will need the latest version of the pico engine,
-running with the code of the `indy-krl` branch.
+To support a Pico Agent, you will need the latest version of the pico engine.
 
 ```
 git clone https://github.com/Picolab/pico-engine.git
 cd pico-engine/
-git checkout -t origin/indy-krl
 npm run setup
 PICO_ENGINE_HOST=http://localhost:8080 PORT=8080 npm start
 ```
