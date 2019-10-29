@@ -36,6 +36,7 @@ ruleset org.sovrin.agency_agent {
   }
   rule save_login_did {
     select when wrangler channel_created
+      name re#^login$# type re#^secret$#
     pre {
       channel = event:attr("channel").klog("channel")
     }
