@@ -29,7 +29,8 @@ ruleset org.sovrin.agents {
   rule initialize_agency {
     select when wrangler ruleset_added where event:attr("rids") >< meta:rid
     pre {
-      agency_eci = event:attr("rs_attrs"){"agency_eci"}
+      agency_eci = event:attr("agency_eci")
+        || event:attr("rs_attrs"){"agency_eci"}
     }
     if ent:agency_eci.isnull() && ent:agents.isnull() then
     every {

@@ -18,8 +18,8 @@ ruleset org.sovrin.agency_agent {
     select when wrangler ruleset_added where event:attr("rids") >< meta:rid
     pre {
       rs_attrs = event:attr("rs_attrs")
-      subs_eci = rs_attrs{"subs_eci"}
-      name = rs_attrs{"name"}
+      subs_eci = event:attr("subs_eci") || rs_attrs{"subs_eci"}
+      name = event:attr("name") || rs_attrs{"name"}
     }
     fired {
       raise wrangler event "subscription" attributes {
