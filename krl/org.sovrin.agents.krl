@@ -10,7 +10,7 @@ ruleset org.sovrin.agents {
       , { "name": "agents" }
       , { "name": "agentByName", "args": [ "name" ] }
       ] , "events":
-      [ //{ "domain": "d1", "type": "t1" }
+      [ { "domain": "agent", "type": "new_login_did", "attrs": [ "name", "did" ] }
       //, { "domain": "d2", "type": "t2", "attrs": [ "a1", "a2" ] }
       ]
     }
