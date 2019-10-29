@@ -8,7 +8,7 @@ ruleset org.sovrin.agency_agent {
       [ { "name": "__testing" }
       //, { "name": "entry", "args": [ "key" ] }
       ] , "events":
-      [ //{ "domain": "d1", "type": "t1" }
+      [ { "domain": "agency_agent", "type": "name_fixed", "attrs": [ "name" ] }
       //, { "domain": "d2", "type": "t2", "attrs": [ "a1", "a2" ] }
       ]
     }
@@ -42,6 +42,20 @@ ruleset org.sovrin.agency_agent {
     }
     fired {
       ent:saved_eci := channel{"id"}
+    }
+  }
+  rule fix_name {
+    select when agency_agent name_fixed
+    pre {
+      fixed_name = event:attr("name")
+    }
+    if fixed_name && fixed_name != ent:name then noop()
+    fired {
+      raise agency_agent event "name_fix_applied" attributes {
+        "original_name": ent:name,
+        "fixed_name": fixed_name
+      };
+      ent:name := fixed_name
     }
   }
   rule communicate_login_did {
