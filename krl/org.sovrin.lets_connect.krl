@@ -8,6 +8,7 @@ ruleset org.sovrin.lets_connect {
   rule guard_for_canonicity {
     select when sovrin new_invitation
       url re#(http.+[?].*c_i=.+)#
+    if url.klog("canonical") then noop()
     fired {
       last
     }
@@ -19,11 +20,11 @@ ruleset org.sovrin.lets_connect {
     select when sovrin new_invitation
       url re#Let.s connect.*(https://.*)#i setting(url)
     pre {
-      res = http:get(url,dontFollowRedirect=true)
-      ok = res{"status_code"} == 302
+      res = http:get(url.klog("url"),dontFollowRedirect=true)
+      ok = res{"status_code"}.klog("status_code") == 302
       location = ok => res{["headers","location"]} | null
     }
-    if ok && location && location.match(pattern) then noop()
+    if ok && location.klog("location") && location.match(pattern) then noop()
     fired {
       raise sovrin event "new_invitation"
         attributes event:attrs.put("url",location)
