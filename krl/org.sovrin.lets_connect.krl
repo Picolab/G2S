@@ -20,7 +20,7 @@ ruleset org.sovrin.lets_connect {
     select when sovrin new_invitation
       url re#Let.s connect.*(https://.*)#i setting(url)
     pre {
-      res = http:get(url.klog("url"),dontFollowRedirect=true).klog("res")
+      res = http:get(url.klog("url")).klog("res")
       ok = res{"status_code"}.klog("status_code") == 200
       location = ok => res{"content"} | null
     }
