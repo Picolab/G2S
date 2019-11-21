@@ -597,7 +597,7 @@ ruleset org.sovrin.agent {
         attributes {"eci":eci} if wrangler:channel(eci)
     }
     finally {
-      ent:connections := event:attr{"clean_connections"} on final
+      ent:connections := event:attr("clean_connections") on final
     }
   }
 }
