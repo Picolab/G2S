@@ -18,6 +18,7 @@ ruleset org.sovrin.agent {
       [ { "domain": "webfinger", "type": "webfinger_wanted" }
       , { "domain": "sovrin", "type": "update_endpoint", "attrs" : ["my_did", "their_host"] }
       , { "domain": "agent", "type": "pending_connections_cleanup_requested" }
+      , { "domain": "agent", "type": "connections_cleanup_requested" }
       ]
     }
     html = function(c_i){
@@ -559,6 +560,44 @@ ruleset org.sovrin.agent {
     fired {
       raise wrangler event "cleanup_finished"
         attributes {"domain": meta:rid}
+    }
+  }
+  rule prepare_to_clean_up_connections {
+    select when agent connections_cleanup_requested
+    pre {
+      bad_connections =
+        ent:connections
+          .filter(function(v){v{"their_vk"}.isnull()})
+      clean_connections =
+        ent:connections
+          .filter(function(v){v{"their_vk"}})
+    }
+    send_directive("clean_connections",{
+      "bad_connections":bad_connections,
+      "clean_connections":clean_connections
+    })
+    fired {
+      raise agent event "ready_to_clean_up_connections" attributes {
+        "bad_connections":bad_connections,
+        "clean_connections":clean_connections
+      }
+    }
+  }
+  rule clean_up_connections {
+    select when agent ready_to_clean_up_connections
+    foreach event:attr("bad_connections") setting(conn)
+    pre {
+      label = conn{"label"}
+      eci = conn{"my_did"}
+    }
+    fired {
+      raise edge event "router_connection_deletion_requested"
+        attributes {"label":label};
+      raise wrangler event "channel_deletion_requested"
+        attributes {"eci":eci} if wrangler:channel(eci)
+    }
+    finally {
+      ent:connections := event:attr{"clean_connections"} on final
     }
   }
 }
