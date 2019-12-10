@@ -85,13 +85,15 @@ ruleset org.sovrin.agent_message {
           }
       }
     }
-    connReqMap = function(label, my_did, my_vk, endpoint, routingKeys){
-      {
+    connReqMap = function(label, my_did, my_vk, endpoint, routingKeys, inviteId){
+      res = {
         "@id": random:uuid(),
         "@type": t_conn_req,
         "label": label,
         "connection": connMap(my_did, my_vk, endpoint, routingKeys)
-      }
+      };
+      inviteId.isnull() => res |
+        res.put("~thread",{"pthid":inviteId,"thid":res{"@id"}})
     }
     toByteArray = function(str){
       1.range(8)
