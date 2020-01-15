@@ -431,7 +431,7 @@ ruleset org.sovrin.agent {
     pre {
       their_key = event:attr("their_vk")
       conn = ent:connections{their_key}
-      content = event:attr("content")
+      content = event:attr("content").decode()
       bm = a_msg:basicMsgMap(content)
       pm = a_msg:packMsg(conn,bm)
       se = conn{"their_endpoint"}
