@@ -89,7 +89,7 @@ In a browser, visit a URL like this one, using the ECI from your Agency pico.
 localhost:8080/sky/cloud/<ECI>/org.sovrin.agency/html.html
 ```
 
-Use the UI it presents to create new Agent Picos. Follow the HATEOS link to login as the owner of a new Agent Pico.
+Use the UI it presents to create new Agent Picos. Follow the HATEOAS link to login as the owner of a new Agent Pico.
 
 Each one will be named with an email addresses, and also can be given
 a color, and a label for its invitations/connections.
