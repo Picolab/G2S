@@ -83,16 +83,22 @@ an Agency Pico.
 In the Channels tab, create a new channel, say ui/application and
 remember the ECI.
 
+### Instructing clients to obtain agents from your Agency
+
 In a browser, visit a URL like this one, using the ECI from your Agency pico.
 
 ```
 localhost:8080/sky/cloud/<ECI>/org.sovrin.agency/html.html
 ```
 
-Use the UI it presents to create new Agent Picos. Follow the HATEOAS link to login as the owner of a new Agent Pico.
+Use the UI it presents to create new Agent Picos.
 
-Each one will be named with an email addresses, and also can be given
+Each one will be named with an email addresses (actually an account), and also can be given
 a color, and a label for its invitations/connections.
+Having provided these, a button "agency/new_agent" will appear, which your client will click.
+
+The owner (your client) will follow the resulting HATEOAS link to login as the owner of a new Agent Pico.
+They can then use the pico-engine UI to control it.
 
 ### Retiring a Pico Agency
 
