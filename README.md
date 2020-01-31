@@ -122,10 +122,12 @@ They can then use the pico-engine UI to control it.
 
 ### Retiring a Pico Agency
 
+1. Ensure that none of the agents are in use, and delete each such pico
 1. In the Agents pico, visit the Testing tab, open the `io.picolabs.collection` box, and click on "wrangler/deletion_imminent"
 2. Visit the About tab, click on the Parent ID, then the "del" link beside the name of the agency pico
 3. In the Root pico, visit the About tab and delete all its child picos
 4. Visit the Rulesets tab and delete the rulesets `io.picolabs.account_management` and `io.picolabs.owner_authentication`
+5. Click on the "Engine Rulesets" link and select each of the "additional rulesets for agencies" and delete them
 5. Click the "logout" button in the upper-right corner of the UI
 
 ## Agent intermediaries
