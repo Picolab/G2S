@@ -46,8 +46,10 @@ form:invalid button {
       + <<<pre>#{name}, your DID is <span id="did" contenteditable
       onclick="#{js}">#{did}</span></pre>
 >>
-      + <<<p>Click anywhere in the DID and then click on the "login" button.</p>
+      + <<<p>Click anywhere in the DID to copy it into your clipboard.</p>
+<p>Then click on the "login" button and paste your DID.</p>
 <button type="button" onclick="location='#{meta:host}'">login</button>
+<p>Or, use this <a href="#{meta:host}/agent.html##{did}">agent UI</a>.</p>
 >>
       + html:footer()
     }
