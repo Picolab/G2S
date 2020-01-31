@@ -24,25 +24,28 @@ ruleset org.sovrin.agent_message {
       <<#{meta:host}/sky/event/#{eci}/#{eid}/sovrin/new_message>>
     }
 
-    // message types
+    // protocol message types
 
-    t_route_fwd = "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/routing/1.0/forward"
+    prefix = "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/"
 
-    t_basic_msg = "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/basicmessage/1.0/message"
+    t_route_fwd = prefix + "routing/1.0/forward"
 
-    t_conn_invit = "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/connections/1.0/invitation"
-    t_conn_req = "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/connections/1.0/request"
-    t_conn_res = "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/connections/1.0/response"
+    t_basic_msg = prefix + "basicmessage/1.0/message"
 
-    t_ping_req = "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/trust_ping/1.0/ping"
-    t_ping_res = "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/trust_ping/1.0/ping_response"
+    t_conn_invit = prefix + "connections/1.0/invitation"
+    t_conn_req = prefix + "connections/1.0/request"
+    t_conn_res = prefix + "connections/1.0/response"
+
+    t_ping_req = prefix + "trust_ping/1.0/ping"
+    t_ping_res = prefix + "trust_ping/1.0/ping_response"
 
     // signature types
-    t_sign_single = "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/signature/1.0/ed25519Sha512_single"
+    t_sign_single = prefix + "signature/1.0/ed25519Sha512_single"
 
     specToEventType = function(spec){
       p = spec.extract(re#^did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/([^/]+)/1.0/(.+)#);
-      p => p.join("_") | null
+      q = spec.extract(re#^https://didcomm.org/([^/]+)/1.0/(.+)#);
+      p => p.join("_") | q => q.join("_") | null
     }
     basicMsgMap = function(content){
       {
