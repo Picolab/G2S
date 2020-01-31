@@ -120,6 +120,15 @@ Having provided these, a button "agency/new_agent" will appear, which your clien
 The owner (your client) will follow the resulting HATEOAS link to login as the owner of a new Agent Pico.
 They can then use the pico-engine UI to control it.
 
+### Install a standalone Pico Agent UI
+
+In the `public` folder of your pico-engine,
+drop in the `agent.html` file from 
+the [pico-agent-ui repo](https://github.com/Picolab/pico-agent-ui/).
+
+This is necessary for agencies which don't allow direct access to
+the [pico-engine UI](https://picolabs.atlassian.net/wiki/spaces/docs/pages/32586678/Pico+Engine+UI+--+My+Picos+page).
+
 ### Retiring a Pico Agency
 
 1. Ensure that none of the agents are in use, and delete each such pico
