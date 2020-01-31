@@ -1,6 +1,26 @@
 # Pico Agents
 Indy Agency based on the Pico-Engine
 
+## Important Notice (time-sensitive as of January 31, 2020)
+
+Anyone already using Pico Agents:
+You SHOULD update your `org.sovrin.agent_message` ruleset. 
+Please complete before March 1, 2020.
+
+New adopters may ignore this section.
+
+### How to do update 
+
+In every pico-engine you control which hosts Pico Agents,
+visit the `ruleset.html` page,
+select `org.sovrin.agent_message` in the left side, and
+click the "flush" button in the right side.
+You sould notice no change in the behavior of your Pico Agents.
+
+### Rationale
+
+A technical change in the Aries protocol described [here](https://github.com/hyperledger/aries-rfcs/tree/master/features/0348-transition-msg-type-to-https)
+
 ## Installing a pico engine
 
 To support a Pico Agent, you will need the latest version of the pico engine.
