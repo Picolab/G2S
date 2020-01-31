@@ -71,7 +71,7 @@ ruleset org.sovrin.agency {
         .put("method","did")
     }
     every {
-      send_directive("hateos".uc(),{
+      send_directive("HATEOAS".uc(),{
         "url": meta:host
           + "/sky/cloud/"
           + meta:eci
