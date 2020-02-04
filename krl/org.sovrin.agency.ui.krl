@@ -17,7 +17,18 @@ select:invalid {
 form:invalid button {
   visibility: hidden;
 }
+form {
+  display: inline-block;
+  border: 5px solid white;
+  padding: 5px;
+}
 </style>
+<script type="text/javascript">
+function showColor(theSelect){
+  var newColor = theSelect.options[theSelect.selectedIndex].value
+  theSelect.form.style.borderColor=newColor
+}
+</script>
 >>
     colorOptions = colors:colorsMap.map(function(c,n){
       <<<option value="#{c}">#{n}</option>
@@ -30,7 +41,7 @@ form:invalid button {
 >>
         + <<<form action="/sky/event/#{meta:eci}/none/agency/new_agent">
 <input name="name" type="email" placeholder="email address" required>
-<select name="color" required>
+<select name="color" required onchange="showColor(this)">
 <option value="" disabled selected hidden>color</option>
 #{colorOptions}</select>
 <input name="label" placeholder="label" required>
