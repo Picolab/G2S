@@ -355,7 +355,9 @@ ruleset org.sovrin.agent {
       their_vk = event:attr("their_vk")
     }
     fired {
-      ent:connections{their_vk} := event:attrs
+      ent:connections{their_vk} := event:attrs;
+      raise agent event "connections_changed"
+        attributes { "connections": ent:connections }
     }
   }
 //
@@ -469,7 +471,9 @@ ruleset org.sovrin.agent {
       raise edge event "router_connection_deletion_requested"
         attributes {"label":pairwise{"label"}};
       raise wrangler event "channel_deletion_requested"
-        attributes {"eci": the_did} if wrangler:channel(the_did)
+        attributes {"eci": the_did} if wrangler:channel(the_did);
+      raise agent event "connections_changed"
+        attributes { "connections": ent:connections }
     }
   }
 
