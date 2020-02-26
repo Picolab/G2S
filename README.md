@@ -44,6 +44,7 @@ https://raw.githubusercontent.com/Picolab/G2S/master/krl/webfinger.krl
 https://raw.githubusercontent.com/Picolab/G2S/master/krl/org.sovrin.agent.ui.krl
 https://raw.githubusercontent.com/Picolab/G2S/master/krl/org.sovrin.agent_message.krl
 https://raw.githubusercontent.com/Picolab/G2S/master/krl/org.sovrin.agent.krl
+https://raw.githubusercontent.com/Picolab/G2S/master/krl/org.sovrin.didcomm_plugins.krl
 ```
 
 The ruleset editor is at `http://localhost:8080/ruleset.html` and look for 
