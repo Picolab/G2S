@@ -142,14 +142,15 @@ ruleset org.sovrin.agent {
 // accept invitation
 //
   rule accept_invitation {
-    select when sovrin new_invitation url re#(http.+[?].*c_i=.+)# setting(url)
+    select when sovrin new_invitation
+      url re#(http.+[?].*((c_i=)|(d_m=)).+)# setting(url)
     pre {
       qs = url.split("?").tail().join("?")
       args = qs.split("&")
         .map(function(x){x.split("=")})
         .collect(function(x){x[0]})
         .map(function(x){x[0][1]})
-      c_i = args{"c_i"}
+      c_i = args{"c_i"} || args{"d_m"}
       im = math:base64decode(c_i).decode()
       their_label = im{"label"}
       need_router_connection = event:attr("need_router_connection")
