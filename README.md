@@ -159,3 +159,10 @@ https://raw.githubusercontent.com/Picolab/G2S/master/krl/org.sovrin.edge.krl
 
 When you install this ruleset in a Pico Agent, it will be able to set up
 an inbound route involving one intermediary.
+
+## Deprecation notice
+
+These rulesets continue to function but
+our intention is to only apply bug fixes going forward.
+
+New development has moved to [ACA-pico](https://github.com/Picolab/aries-cloudagent-pico)
