@@ -1,11 +1,11 @@
 # Pico Agents
 Indy Agency based on the Pico-Engine
 
-## Important Notice (time-sensitive as of January 31, 2020)
+## Important Notice (time-sensitive as of September 30, 2020)
 
 Anyone already using Pico Agents:
 You SHOULD update your `org.sovrin.agent_message` ruleset. 
-Please complete before March 1, 2020.
+Please complete before October 15, 2020.
 
 New adopters may ignore this section.
 

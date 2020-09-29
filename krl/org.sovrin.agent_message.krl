@@ -26,7 +26,7 @@ ruleset org.sovrin.agent_message {
 
     // protocol message types
 
-    prefix = "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/"
+    prefix = "https://didcomm.org/"
 
     t_route_fwd = prefix + "routing/1.0/forward"
 
