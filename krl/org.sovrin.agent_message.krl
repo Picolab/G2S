@@ -45,7 +45,7 @@ ruleset org.sovrin.agent_message {
     specToEventType = function(spec){
       p = spec.extract(re#^did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/([^/]+)/1.0/(.+)#);
       q = spec.extract(re#^https://didcomm.org/([^/]+)/1.0/(.+)#);
-      p => p.join("_") | q => q.join("_") | null
+      p.length() => p.join("_") | q.length() => q.join("_") | null
     }
     basicMsgMap = function(content){
       {
