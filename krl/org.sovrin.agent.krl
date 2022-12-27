@@ -5,7 +5,7 @@ ruleset org.sovrin.agent {
     use module io.picolabs.wrangler alias wrangler
     use module io.picolabs.visual_params alias vp
     use module webfinger alias wf
-    shares __testing, html, ui, getEndpoint, connections, pendingConnections
+    shares __testing, html, ui, getEndpoint, connections, pendingConnections, get_last_http_response
     provides connections, ui
   }
   global {
@@ -64,6 +64,9 @@ ruleset org.sovrin.agent {
     }
     pendingConnections = function(){
       ent:pending_conn
+    }
+    get_last_http_response = function(){
+      ent:last_http_response
     }
   }
 //
