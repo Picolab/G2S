@@ -26,7 +26,7 @@ ruleset org.sovrin.agent_message {
 
     // protocol message types
 
-    prefix = "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/"
+    prefix = "https://didcomm.org/"
 
     t_route_fwd = prefix + "routing/1.0/forward"
 
@@ -40,7 +40,7 @@ ruleset org.sovrin.agent_message {
     t_ping_res = prefix + "trust_ping/1.0/ping_response"
 
     // signature types
-    t_sign_single = prefix + "signature/1.0/ed25519Sha512_single"
+    t_sign_single = "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/signature/1.0/ed25519Sha512_single"
 
     specToEventType = function(spec){
       p = spec.extract(re#^did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/([^/]+)/1.0/(.+)#);
