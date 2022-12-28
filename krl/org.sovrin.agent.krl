@@ -273,7 +273,7 @@ ruleset org.sovrin.agent {
     select when edge new_router_connection_recorded
       where event:attr("txnId") == meta:txnId
     fired {
-      ent:routing_response := event:attrs
+      ent:routing_response := event:attrs;
       raise sovrin event event:attr("sovrin_event")
         attributes event:attrs
     }
