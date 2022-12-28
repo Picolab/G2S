@@ -11,6 +11,7 @@ ruleset org.sovrin.router {
       ] , "events":
       [ { "domain": "router", "type": "request", "attrs": [ "label", "final_key"] }
       , { "domain": "router", "type": "messages_not_needed", "attrs": [ "vk", "msgTags" ] }
+      , { "domain": "router", "type": "channels_gone" }
       ]
     }
     connection = function(vk){
@@ -141,6 +142,30 @@ ruleset org.sovrin.router {
     fired {
       raise wrangler event "channel_deletion_requested"
         attributes {"eci":eci};
+      clear ent:routingConnections{vk};
+      clear ent:stored_msgs{vk}
+    }
+  }
+  rule clean_up_missing_channels {
+    select when router channels_gone
+    pre {
+      channels = wrangler:channel().map(function(c){c{"id"}})
+      old_vks = ent:routingConnections.map(function(rc){rc{"my_did"}})
+        .filter(function(d){channels >< d => false | true})
+        .keys()
+    }
+    send_directive("response",{
+      "channel_count":channels.length(),
+      "old_vks_count":old_vks.length()
+    })
+    fired {
+      raise router event "vks_gone" attributes{"vks":old_vks}
+    }
+  }
+  rule clean_up_vks_for_missing_channels {
+    select when router vks_gone
+    foreach event:attr("vks") setting(vk)
+    fired {
       clear ent:routingConnections{vk};
       clear ent:stored_msgs{vk}
     }
