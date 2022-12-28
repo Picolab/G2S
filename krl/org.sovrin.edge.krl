@@ -2,7 +2,7 @@ ruleset org.sovrin.edge {
   meta {
     use module io.picolabs.wrangler alias wrangler
     use module org.sovrin.agent_message alias a_msg
-    shares __testing, get_vk, get_did, invitation_via, ui
+    shares __testing, get_vk, get_did, invitation_via, ui, get_failed_response
   }
   global {
     __testing = { "queries":
@@ -54,6 +54,9 @@ ruleset org.sovrin.edge {
           autosend={"eci":meta:eci,"domain":"edge","type":"http_post_response"});
         No  => noop();
       }
+    }
+    get_failed_response = function(){
+      ent:failed_response
     }
   }
   rule initialize_a_router {
