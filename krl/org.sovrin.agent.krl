@@ -5,7 +5,8 @@ ruleset org.sovrin.agent {
     use module io.picolabs.wrangler alias wrangler
     use module io.picolabs.visual_params alias vp
     use module webfinger alias wf
-    shares __testing, html, ui, getEndpoint, connections, pendingConnections, get_last_http_response
+    shares __testing, html, ui, getEndpoint, connections, pendingConnections,
+      get_last_http_response, get_routing_response
     provides connections, ui
   }
   global {
@@ -67,6 +68,9 @@ ruleset org.sovrin.agent {
     }
     get_last_http_response = function(){
       ent:last_http_response
+    }
+    get_routing_response = function(){
+      ent:routing_response
     }
   }
 //
@@ -269,6 +273,7 @@ ruleset org.sovrin.agent {
     select when edge new_router_connection_recorded
       where event:attr("txnId") == meta:txnId
     fired {
+      ent:routing_response := event:attrs
       raise sovrin event event:attr("sovrin_event")
         attributes event:attrs
     }
